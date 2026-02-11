@@ -292,7 +292,10 @@ const GalleryManager = () => {
             <div key={image.id} className="relative group">
               <div className="aspect-square bg-neutral-200 rounded-lg flex items-center justify-center overflow-hidden">
                 <img
-                  src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000'}${image.url}`}
+                  src={image.url.startsWith('http')
+                    ? image.url
+                    : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000'}${image.url}`
+                  }
                   alt={image.title}
                   className="w-full h-full object-cover"
                 />
