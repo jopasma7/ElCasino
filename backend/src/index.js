@@ -4,6 +4,15 @@ import dotenv from 'dotenv'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 
+console.log('🔄 Iniciando servidor El Casino...')
+
+// Configuración
+dotenv.config()
+console.log('✅ Variables de entorno cargadas')
+console.log('📊 NODE_ENV:', process.env.NODE_ENV)
+console.log('🔌 PORT:', process.env.PORT || 4000)
+console.log('🗄️ DATABASE_URL:', process.env.DATABASE_URL ? 'Configurada ✅' : 'NO CONFIGURADA ❌')
+
 // Routes
 import dishRoutes from './routes/dishes.js'
 import galleryRoutes from './routes/gallery.js'
@@ -11,8 +20,7 @@ import dailyMenuRoutes from './routes/dailyMenu.js'
 import orderRoutes from './routes/orders.js'
 import authRoutes from './routes/auth.js'
 
-// Configuración
-dotenv.config()
+console.log('✅ Rutas importadas correctamente')
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -55,6 +63,8 @@ app.use('/api/gallery', galleryRoutes)
 app.use('/api/daily-menu', dailyMenuRoutes)
 app.use('/api/orders', orderRoutes)
 
+console.log('✅ Rutas configuradas correctamente')
+
 // Health check
 app.get('/', (req, res) => {
   res.json({ 
@@ -79,7 +89,28 @@ app.use((req, res) => {
 })
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`)
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Servidor corriendo en puerto ${PORT}`)
   console.log(`📊 Environment: ${process.env.NODE_ENV}`)
+  console.log(`✅ El Casino API está listo para recibir peticiones`)
+})
+
+// Manejo de errores no capturados
+process.on('uncaughtException', (error) => {
+  console.error('❌ Error no capturado:', error)
+  process.exit(1)
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Promise rechazada no manejada:', reason)
+  process.exit(1)
+})
+
+// Manejo de señales de cierre
+process.on('SIGTERM', () => {
+  console.log('⚠️ SIGTERM recibido, cerrando servidor...')
+  server.close(() => {
+    console.log('✅ Servidor cerrado correctamente')
+    process.exit(0)
+  })
 })
