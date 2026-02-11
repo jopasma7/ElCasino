@@ -432,7 +432,6 @@ const DailyMenuManager = () => {
           Actualizar Menú del Día
         </button>
       </form>
-      </div>
     </div>
   )
 }
