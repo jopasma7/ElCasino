@@ -39,39 +39,50 @@ router.get('/:id', async (req, res) => {
 })
 
 // POST - Subir nueva imagen (requiere autenticación)
+// Acepta tanto file upload (multipart/form-data) como URL directo (application/json)
 router.post('/',
   authMiddleware,
-  upload.single('image'),
-  [
-    body('title').notEmpty().withMessage('El título es requerido'),
-    body('category').notEmpty().withMessage('La categoría es requerida')
-  ],
   async (req, res) => {
     try {
-      const errors = validationResult(req)
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
-      }
-
-      if (!req.file) {
-        return res.status(400).json({ error: 'La imagen es requerida' })
-      }
-
-      const { title, category } = req.body
-      const url = `/uploads/${req.file.filename}`
-
-      const image = await prisma.galleryImage.create({
-        data: {
-          title,
-          category,
-          url
+      // Si es multipart/form-data, usar upload middleware
+      const uploadMiddleware = upload.single('image')
+      
+      uploadMiddleware(req, res, async (err) => {
+        if (err && req.get('content-type')?.includes('multipart')) {
+          return res.status(400).json({ error: err.message })
         }
-      })
 
-      res.status(201).json(image)
+        // Validación
+        const { title, category, url } = req.body
+        
+        if (!title) {
+          return res.status(400).json({ error: 'El título es requerido' })
+        }
+        
+        if (!category) {
+          return res.status(400).json({ error: 'La categoría es requerida' })
+        }
+
+        // Aceptar URL directo (JSON) o archivo uploaded (multipart)
+        if (!req.file && !url) {
+          return res.status(400).json({ error: 'La imagen o URL es requerida' })
+        }
+
+        const finalUrl = url || `/uploads/${req.file.filename}`
+
+        const image = await prisma.galleryImage.create({
+          data: {
+            title,
+            category,
+            url: finalUrl
+          }
+        })
+
+        res.status(201).json(image)
+      })
     } catch (error) {
-      console.error('Error al subir imagen:', error)
-      res.status(500).json({ error: 'Error al subir imagen' })
+      console.error('Error al crear imagen:', error)
+      res.status(500).json({ error: 'Error al crear imagen' })
     }
   }
 )

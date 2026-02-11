@@ -101,7 +101,10 @@ const Menu = () => {
               <div className="h-48 bg-neutral-200 flex items-center justify-center">
                 {dish.image ? (
                   <img 
-                    src={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000'}${dish.image}`} 
+                    src={dish.image.startsWith('http') 
+                      ? dish.image 
+                      : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000'}${dish.image}`
+                    } 
                     alt={dish.name} 
                     className="w-full h-full object-cover" 
                     onError={(e) => {
