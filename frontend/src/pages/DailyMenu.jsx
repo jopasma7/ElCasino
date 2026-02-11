@@ -35,12 +35,6 @@ const DailyMenu = () => {
       setLoading(false)
     }
   }
-      console.error('Error al cargar menú del día:', error)
-      setError('No hay menú del día disponible o el backend no está activo.')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   if (loading) {
     return (
