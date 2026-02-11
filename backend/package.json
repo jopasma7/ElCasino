@@ -6,9 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon src/index.js",
-    "start": "npx prisma generate && npx prisma db push --accept-data-loss --skip-generate && node src/index.js",
-    "build": "prisma generate && prisma db push --accept-data-loss",
-    "postinstall": "prisma generate",
+    "start": "node src/index.js",
+    "postinstall": "prisma generate && prisma db push --accept-data-loss --skip-generate --force-reset || true",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
