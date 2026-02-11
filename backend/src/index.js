@@ -21,8 +21,25 @@ const app = express()
 const PORT = process.env.PORT || 4000
 
 // Middleware
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://elcasinobenilloba.com',
+  'https://www.elcasinobenilloba.com',
+  'https://el-casino.vercel.app',
+  process.env.FRONTEND_URL
+].filter(Boolean)
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Permitir peticiones sin origin (como apps móviles o Postman)
+    if (!origin) return callback(null, true)
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
   credentials: true
 }))
 app.use(express.json())
