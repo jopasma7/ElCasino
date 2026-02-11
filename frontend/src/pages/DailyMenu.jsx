@@ -53,14 +53,47 @@ const DailyMenu = () => {
     )
   }
 
-  if (error || !dailyMenu) {
+  // Si hay un error de conexión real (no 404)
+  if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
-          <p className="text-neutral-600 text-lg mb-4">{error || 'No hay menú disponible para hoy'}</p>
+          <p className="text-red-600 text-lg mb-4">{error}</p>
           <button onClick={fetchDailyMenu} className="btn-primary">
             Reintentar
           </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Si no hay menú del día publicado
+  if (!dailyMenu) {
+    return (
+      <div className="py-12 bg-neutral-50 min-h-screen">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl md:text-5xl font-display font-bold text-neutral-900 mb-4">
+              Menú del Día
+            </h1>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-md p-12 text-center">
+            <Calendar className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
+            <h2 className="text-2xl font-semibold text-neutral-900 mb-2">
+              Menú no disponible
+            </h2>
+            <p className="text-neutral-600 text-lg">
+              Todavía no hemos publicado el menú del día.
+              <br />
+              Vuelve pronto o consulta nuestra carta completa.
+            </p>
+            <div className="mt-8">
+              <Link to="/menu" className="btn-primary">
+                Ver Carta Completa
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     )

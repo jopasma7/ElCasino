@@ -1,103 +1,247 @@
 import { Link } from 'react-router-dom'
-import { ChefHat, UtensilsCrossed, Clock, Award, ArrowRight } from 'lucide-react'
+import { ChefHat, UtensilsCrossed, Clock, Award, ArrowRight, MapPin, Phone, Mail, Star, Users } from 'lucide-react'
 
 const Home = () => {
   const features = [
     {
       icon: <ChefHat className="w-8 h-8" />,
       title: 'Cocina Tradicional',
-      description: 'Platos caseros elaborados con recetas tradicionales y productos de calidad'
+      description: 'Platos caseros elaborados con recetas tradicionales y productos de calidad superior'
     },
     {
       icon: <UtensilsCrossed className="w-8 h-8" />,
       title: 'Menú del Día',
-      description: 'Menús variados cada día con primero, segundo, postre y bebida'
+      description: 'Menús variados cada día con primero, segundo, postre y bebida incluida'
     },
     {
       icon: <Clock className="w-8 h-8" />,
-      title: 'Horario Amplio',
-      description: 'Abierto desde primera hora para desayunos, comidas y cenas'
+      title: 'Atención Rápida',
+      description: 'Servicio ágil sin sacrificar la calidad en nuestras preparaciones'
     },
     {
       icon: <Award className="w-8 h-8" />,
-      title: 'Calidad Garantizada',
-      description: 'Más de 30 años sirviendo a nuestros clientes con la mejor calidad'
+      title: 'Experiencia',
+      description: 'Más de 30 años sirviéndote con dedicación y profesionalismo'
+    }
+  ]
+
+  const testimonials = [
+    {
+      name: 'María García',
+      text: 'Excelente comida, muy bien hecha y con mucho sabor. El menú del día es inmejorable.',
+      rating: 5
+    },
+    {
+      name: 'Juan López',
+      text: 'Lugar acogedor y atención detallista. Siempre me siento como en casa.',
+      rating: 5
+    },
+    {
+      name: 'Elena Martínez',
+      text: 'Los platos están deliciosos y las raciones son generosas. Perfectamente recomendable.',
+      rating: 5
     }
   ]
 
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="container mx-auto px-4 py-24 md:py-32 relative">
+    <div className="bg-white">
+      {/* Hero Section Mejorado */}
+      <section className="relative h-screen md:h-[600px] flex items-center overflow-hidden">
+        {/* Background Image con overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-primary-900 via-primary-800 to-primary-700">
+          <div className="absolute inset-0 opacity-40" style={{
+            backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'
+          }}></div>
+        </div>
+
+        {/* Contenido */}
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl">
-            <h1 className="text-5xl md:text-6xl font-display font-bold mb-6 leading-tight">
-              Bienvenido a<br />El Casino Benilloba
+            <div className="mb-6 inline-block">
+              <span className="bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm font-semibold">
+                🍽️ Desde 1994 - Tradición auténtica
+              </span>
+            </div>
+            
+            <h1 className="text-5xl md:text-7xl font-display font-bold text-white mb-6 leading-tight">
+              El Casino<br />Benilloba
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-primary-50 leading-relaxed">
+            
+            <p className="text-xl md:text-2xl text-primary-50 mb-8 leading-relaxed max-w-2xl">
               Bar restaurante tradicional en el corazón de Benilloba. 
-              Donde cada comida es una experiencia memorable.
+              Donde cada comida es una experiencia única con sabor a casa.
             </p>
+            
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/menu-del-dia" className="btn-primary bg-white text-primary-700 hover:bg-primary-50 inline-flex items-center justify-center gap-2">
+              <Link to="/menu-del-dia" className="bg-white text-primary-700 hover:bg-primary-50 px-8 py-4 rounded-lg font-semibold inline-flex items-center justify-center gap-2 transition-all transform hover:scale-105">
                 Ver Menú del Día
                 <ArrowRight className="w-5 h-5" />
               </Link>
-              <Link to="/pedido" className="btn-secondary bg-primary-500 hover:bg-primary-600 text-white inline-flex items-center justify-center">
+              <Link to="/pedido" className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-lg font-semibold inline-flex items-center justify-center transition-all transform hover:scale-105">
                 Hacer un Pedido
               </Link>
+            </div>
+
+            {/* Quick Info */}
+            <div className="mt-12 flex flex-col sm:flex-row gap-8 text-white">
+              <div className="flex items-center gap-3">
+                <Clock className="w-6 h-6 text-primary-300" />
+                <div>
+                  <p className="text-sm text-primary-200">Horario</p>
+                  <p className="font-semibold">11:00 - 23:00</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <MapPin className="w-6 h-6 text-primary-300" />
+                <div>
+                  <p className="text-sm text-primary-200">Ubicación</p>
+                  <p className="font-semibold">Benilloba, Alicante</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Phone className="w-6 h-6 text-primary-300" />
+                <div>
+                  <p className="text-sm text-primary-200">Teléfono</p>
+                  <p className="font-semibold">+34 966 XX XX XX</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-white">
+      {/* Sección de Características */}
+      <section className="py-24 bg-neutral-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-display font-bold text-neutral-900 mb-4">
               ¿Por qué elegirnos?
             </h2>
-            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-              Combinamos tradición, calidad y buen servicio para ofrecerte la mejor experiencia gastronómica
-            </p>
+            <div className="w-16 h-1 bg-primary-600 mx-auto"></div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="text-center group">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 text-primary-600 rounded-full mb-4 group-hover:bg-primary-600 group-hover:text-white transition-all">
+              <div key={index} className="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all transform hover:scale-105">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 text-primary-600 rounded-full mb-4">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-neutral-600">{feature.description}</p>
+                <h3 className="text-xl font-semibold mb-3 text-neutral-900">{feature.title}</h3>
+                <p className="text-neutral-600 leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-neutral-900 text-white">
+      {/* Sección "Sobre Nosotros" */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            {/* Imagen placeholder */}
+            <div className="relative">
+              <div className="bg-gradient-to-br from-primary-400 to-primary-700 rounded-xl overflow-hidden h-96 md:h-full flex items-center justify-center">
+                <div className="text-center">
+                  <ChefHat className="w-24 h-24 text-white/50 mx-auto mb-4" />
+                  <p className="text-white/70 text-lg">Tu foto del restaurante aquí</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Contenido */}
+            <div>
+              <h2 className="text-4xl font-display font-bold text-neutral-900 mb-6">
+                Tradición desde 1994
+              </h2>
+              <p className="text-lg text-neutral-600 mb-4 leading-relaxed">
+                El Casino Benilloba es mucho más que un restaurante. Es un lugar donde generaciones de familias han compartido comidas memorables, donde la tradición culinaria se mezcla con la calidez del trato personalizado.
+              </p>
+              <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
+                Cada plato que preparamos es el resultado de años de experiencia, pasión por la cocina y respeto por los ingredientes de calidad. No buscamos ser los más modernos, buscamos ser los mejores en lo que hacemos: cocina tradicional, honesta y deliciosa.
+              </p>
+              
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 mt-1">✓</div>
+                  <div>
+                    <h3 className="font-semibold text-neutral-900">Productos locales</h3>
+                    <p className="text-neutral-600">Trabajamos con proveedores de confianza de la región</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 mt-1">✓</div>
+                  <div>
+                    <h3 className="font-semibold text-neutral-900">Recetas tradicionales</h3>
+                    <p className="text-neutral-600">Elaboradas con técnicas transmitidas por generaciones</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 mt-1">✓</div>
+                  <div>
+                    <h3 className="font-semibold text-neutral-900">Atención personalizada</h3>
+                    <p className="text-neutral-600">Te tratamos como parte de nuestra familia</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonios */}
+      <section className="py-24 bg-neutral-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-display font-bold text-neutral-900 mb-4">
+              Lo que dicen nuestros clientes
+            </h2>
+            <div className="w-16 h-1 bg-primary-600 mx-auto"></div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <div key={index} className="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all">
+                <div className="flex items-center gap-1 mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-neutral-600 mb-6 italic">"{testimonial.text}"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                    <Users className="w-6 h-6 text-primary-600" />
+                  </div>
+                  <p className="font-semibold text-neutral-900">{testimonial.name}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Final */}
+      <section className="py-24 bg-gradient-to-r from-primary-600 to-primary-800 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-display font-bold mb-6">
-            ¿Listo para disfrutar?
+            ¿Listo para una experiencia culinaria memorable?
           </h2>
-          <p className="text-xl text-neutral-300 mb-8 max-w-2xl mx-auto">
-            Visítanos o haz tu pedido online. Te esperamos con los brazos abiertos.
+          <p className="text-xl text-primary-50 mb-12 max-w-2xl mx-auto">
+            Visítanos hoy o haz tu pedido online. Te esperamos con lo mejor de nuestra cocina.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/contacto" className="btn-primary">
+            <Link to="/contacto" className="bg-white text-primary-700 hover:bg-primary-50 px-8 py-4 rounded-lg font-semibold inline-flex items-center justify-center gap-2 transition-all">
+              <MapPin className="w-5 h-5" />
               Cómo Llegar
             </Link>
-            <Link to="/menu" className="btn-secondary">
+            <Link to="/menu" className="border-2 border-white text-white hover:bg-white hover:text-primary-700 px-8 py-4 rounded-lg font-semibold inline-flex items-center justify-center transition-all">
+              <UtensilsCrossed className="w-5 h-5 mr-2" />
               Ver Carta Completa
             </Link>
           </div>
         </div>
       </section>
     </div>
+
   )
 }
 
