@@ -1,0 +1,121 @@
+import express from 'express'
+import { body, validationResult } from 'express-validator'
+import prisma from '../config/database.js'
+import { authMiddleware } from '../middleware/auth.js'
+import { upload } from '../middleware/upload.js'
+
+const router = express.Router()
+
+// GET - Obtener todas las imágenes de la galería (público)
+router.get('/', async (req, res) => {
+  try {
+    const images = await prisma.galleryImage.findMany({
+      orderBy: { createdAt: 'desc' }
+    })
+    
+    res.json(images)
+  } catch (error) {
+    console.error('Error al obtener galería:', error)
+    res.status(500).json({ error: 'Error al obtener galería' })
+  }
+})
+
+// GET - Obtener una imagen por ID (público)
+router.get('/:id', async (req, res) => {
+  try {
+    const image = await prisma.galleryImage.findUnique({
+      where: { id: req.params.id }
+    })
+    
+    if (!image) {
+      return res.status(404).json({ error: 'Imagen no encontrada' })
+    }
+    
+    res.json(image)
+  } catch (error) {
+    console.error('Error al obtener imagen:', error)
+    res.status(500).json({ error: 'Error al obtener imagen' })
+  }
+})
+
+// POST - Subir nueva imagen (requiere autenticación)
+router.post('/',
+  authMiddleware,
+  upload.single('image'),
+  [
+    body('title').notEmpty().withMessage('El título es requerido'),
+    body('category').notEmpty().withMessage('La categoría es requerida')
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req)
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() })
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'La imagen es requerida' })
+      }
+
+      const { title, category } = req.body
+      const url = `/uploads/${req.file.filename}`
+
+      const image = await prisma.galleryImage.create({
+        data: {
+          title,
+          category,
+          url
+        }
+      })
+
+      res.status(201).json(image)
+    } catch (error) {
+      console.error('Error al subir imagen:', error)
+      res.status(500).json({ error: 'Error al subir imagen' })
+    }
+  }
+)
+
+// PUT - Actualizar imagen (requiere autenticación)
+router.put('/:id',
+  authMiddleware,
+  upload.single('image'),
+  async (req, res) => {
+    try {
+      const { title, category } = req.body
+      const url = req.file ? `/uploads/${req.file.filename}` : undefined
+
+      const updateData = {
+        ...(title && { title }),
+        ...(category && { category }),
+        ...(url && { url })
+      }
+
+      const image = await prisma.galleryImage.update({
+        where: { id: req.params.id },
+        data: updateData
+      })
+
+      res.json(image)
+    } catch (error) {
+      console.error('Error al actualizar imagen:', error)
+      res.status(500).json({ error: 'Error al actualizar imagen' })
+    }
+  }
+)
+
+// DELETE - Eliminar imagen (requiere autenticación)
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    await prisma.galleryImage.delete({
+      where: { id: req.params.id }
+    })
+    
+    res.json({ message: 'Imagen eliminada correctamente' })
+  } catch (error) {
+    console.error('Error al eliminar imagen:', error)
+    res.status(500).json({ error: 'Error al eliminar imagen' })
+  }
+})
+
+export default router

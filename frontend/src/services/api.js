@@ -1,0 +1,73 @@
+import axios from 'axios'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
+
+// Crear instancia de axios
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
+// Interceptor para añadir token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+// Auth API
+export const authAPI = {
+  login: (password) => api.post('/auth/login', { password }),
+  verify: () => api.get('/auth/verify')
+}
+
+// Dishes API
+export const dishesAPI = {
+  getAll: (params) => api.get('/dishes', { params }),
+  getById: (id) => api.get(`/dishes/${id}`),
+  create: (formData) => api.post('/dishes', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  update: (id, formData) => api.put(`/dishes/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  delete: (id) => api.delete(`/dishes/${id}`)
+}
+
+// Gallery API
+export const galleryAPI = {
+  getAll: () => api.get('/gallery'),
+  getById: (id) => api.get(`/gallery/${id}`),
+  create: (formData) => api.post('/gallery', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  update: (id, formData) => api.put(`/gallery/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  delete: (id) => api.delete(`/gallery/${id}`)
+}
+
+// Daily Menu API
+export const dailyMenuAPI = {
+  getToday: () => api.get('/daily-menu/today'),
+  getAll: () => api.get('/daily-menu'),
+  getById: (id) => api.get(`/daily-menu/${id}`),
+  create: (data) => api.post('/daily-menu', data),
+  update: (id, data) => api.put(`/daily-menu/${id}`, data),
+  delete: (id) => api.delete(`/daily-menu/${id}`)
+}
+
+// Orders API
+export const ordersAPI = {
+  getAll: (params) => api.get('/orders', { params }),
+  getById: (id) => api.get(`/orders/${id}`),
+  create: (data) => api.post('/orders', data),
+  updateStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
+  cancel: (id) => api.delete(`/orders/${id}`)
+}
+
+export default api

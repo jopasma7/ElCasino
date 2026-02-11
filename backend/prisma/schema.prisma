@@ -1,0 +1,134 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Categorías de platos
+enum DishCategory {
+  entrantes
+  primeros
+  segundos
+  postres
+  bebidas
+}
+
+// Platos de la carta
+model Dish {
+  id          String        @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  category    DishCategory
+  image       String?
+  available   Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  orderItems  OrderItem[]
+  
+  @@map("dishes")
+}
+
+// Galería de imágenes
+model GalleryImage {
+  id        String   @id @default(uuid())
+  title     String
+  category  String
+  url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("gallery_images")
+}
+
+// Menú del día
+model DailyMenu {
+  id        String   @id @default(uuid())
+  date      DateTime @unique @default(now())
+  price     Float
+  includes  String[] // Array de strings: ["Primero", "Segundo", "Postre", "Bebida"]
+  starters  String[] // Array de primeros platos
+  mains     String[] // Array de segundos platos
+  desserts  String[] // Array de postres
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("daily_menus")
+}
+
+// Tipo de pedido
+enum OrderType {
+  takeaway
+  delivery
+}
+
+// Estado del pedido
+enum OrderStatus {
+  pending
+  confirmed
+  preparing
+  ready
+  completed
+  cancelled
+}
+
+// Pedidos
+model Order {
+  id           String      @id @default(uuid())
+  orderNumber  Int         @unique @default(autoincrement())
+  type         OrderType
+  status       OrderStatus @default(pending)
+  
+  // Información del cliente
+  customerName    String
+  customerPhone   String
+  customerAddress String?
+  notes           String?
+  
+  // Items del pedido
+  items        OrderItem[]
+  
+  // Totales
+  subtotal     Float
+  total        Float
+  
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+  @@map("orders")
+}
+
+// Items de cada pedido
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  dishId    String
+  dish      Dish     @relation(fields: [dishId], references: [id])
+  
+  quantity  Int
+  price     Float    // Precio en el momento del pedido
+  
+  createdAt DateTime @default(now())
+  
+  @@map("order_items")
+}
+
+// Administradores (opcional para futuro)
+model Admin {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String   // Hash bcrypt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("admins")
+}
