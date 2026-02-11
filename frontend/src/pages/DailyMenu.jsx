@@ -29,8 +29,14 @@ const DailyMenu = () => {
       
       setDailyMenu(menu)
     } catch (error) {
-      console.error('Error al cargar menú del día:', error)
-      setError('No hay menú del día disponible o el backend no está activo.')
+      // 404 significa que no hay menú del día, no es un error técnico
+      if (error.response?.status === 404) {
+        setError(null) // No es un error, simplemente no hay menú
+        setDailyMenu(null)
+      } else {
+        console.error('Error al cargar menú del día:', error)
+        setError('Error al conectar con el servidor.')
+      }
     } finally {
       setLoading(false)
     }
