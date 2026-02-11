@@ -60,3 +60,6 @@ backend/prisma/migrations/
 .vercel
 .netlify
 .zeabur
+# Scripts sensibles
+backend/scripts/generatePassword.js
+backend/scripts/*.js
