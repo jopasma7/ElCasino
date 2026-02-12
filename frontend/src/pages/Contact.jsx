@@ -27,8 +27,8 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-neutral-900 mb-1">Dirección</h3>
                     <p className="text-neutral-600">
-                      Calle Principal, 1<br />
-                      03820 Benilloba, Alicante<br />
+                      Plaça la Font, 2<br />
+                      03810 Benilloba, Alicante<br />
                       España
                     </p>
                   </div>
@@ -41,28 +41,15 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-neutral-900 mb-1">Teléfono</h3>
                     <a
-                      href="tel:+34965511234"
+                      href="tel:+34722741992"
                       className="text-neutral-600 hover:text-primary-600 transition-colors"
                     >
-                      +34 965 51 12 34
+                      +34 722 74 19 92
                     </a>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-6 h-6 text-primary-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-neutral-900 mb-1">Email</h3>
-                    <a
-                      href="mailto:info@elcasinobenilloba.com"
-                      className="text-neutral-600 hover:text-primary-600 transition-colors"
-                    >
-                      info@elcasinobenilloba.com
-                    </a>
-                  </div>
-                </div>
+                {/* Sección de email eliminada por solicitud */}
 
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -72,16 +59,16 @@ const Contact = () => {
                     <h3 className="font-semibold text-neutral-900 mb-2">Horario</h3>
                     <div className="text-neutral-600 space-y-1 text-sm">
                       <div className="flex justify-between gap-4">
-                        <span className="font-medium">Lunes - Viernes:</span>
-                        <span>8:00 - 16:00, 19:00 - 23:00</span>
+                        <span className="font-medium">Lunes:</span>
+                        <span>Cerrado</span>
                       </div>
                       <div className="flex justify-between gap-4">
-                        <span className="font-medium">Sábados:</span>
-                        <span>8:00 - 23:30</span>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <span className="font-medium">Domingos:</span>
+                        <span className="font-medium">Martes - Domingo:</span>
                         <span>8:00 - 16:00</span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="font-medium">En fiestas y eventos:</span>
+                        <span>Abierto por la noche</span>
                       </div>
                     </div>
                   </div>
@@ -90,20 +77,18 @@ const Contact = () => {
             </div>
           </div>
 
-          {/* Map */}
-          <div className="bg-white rounded-xl shadow-md overflow-hidden">
-            <div className="h-full min-h-[500px] bg-neutral-200 flex items-center justify-center">
-              <div className="text-center p-8">
-                <MapPin className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
-                <p className="text-neutral-600 mb-4">
-                  Mapa de ubicación
-                </p>
-                <p className="text-sm text-neutral-500">
-                  {/* TODO: Integrar Google Maps */}
-                  Integración con Google Maps próximamente
-                </p>
-              </div>
-            </div>
+          {/* Mapa Google Maps */}
+          <div className="bg-white rounded-xl shadow-md p-6 flex items-center justify-center">
+            <iframe
+              title="Ubicación El Casino Benilloba"
+              src="https://www.google.com/maps?q=Plaça+la+Font+2,+03810+Benilloba,+Alicante,+España&output=embed"
+              width="100%"
+              height="350"
+              style={{ border: 0, borderRadius: '0.75rem', minWidth: '250px' }}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            ></iframe>
           </div>
         </div>
 
@@ -116,7 +101,7 @@ const Contact = () => {
             No dudes en contactarnos. Estamos aquí para ayudarte.
           </p>
           <a
-            href="tel:+34965511234"
+            href="tel:+34722741992"
             className="inline-block bg-white text-primary-700 px-8 py-4 rounded-lg font-semibold hover:bg-primary-50 transition-colors"
           >
             Llamar Ahora

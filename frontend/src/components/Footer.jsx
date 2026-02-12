@@ -14,7 +14,7 @@ const Footer = () => {
               <h3 className="text-2xl font-display font-bold text-white">El Casino</h3>
             </div>
             <p className="text-sm leading-relaxed mb-6">
-              Bar restaurante tradicional en el corazón de Benilloba. Desde 1994 sirviendo auténtica cocina casera.
+              Bar restaurante tradicional en el corazón de Benilloba. Cocina casera y trato cercano para ti y los tuyos.
             </p>
             <div className="flex gap-4">
               <a
@@ -76,17 +76,16 @@ const Footer = () => {
             </h4>
             <div className="space-y-4 text-sm">
               <div>
-                <p className="font-medium text-white">Lunes - Viernes</p>
-                <p className="text-neutral-400">8:00 - 16:00</p>
-                <p className="text-neutral-400">19:00 - 23:00</p>
+                <p className="font-medium text-white">Lunes</p>
+                <p className="text-neutral-400">Cerrado</p>
               </div>
               <div>
-                <p className="font-medium text-white">Sábados</p>
-                <p className="text-neutral-400">8:00 - 23:30</p>
+                <p className="font-medium text-white">Martes - Domingo</p>
+                <p className="text-neutral-400">8:00 - 16:00</p>
               </div>
               <div>
-                <p className="font-medium text-white">Domingos</p>
-                <p className="text-neutral-400">8:00 - 16:00</p>
+                <p className="font-medium text-white">En fiestas y eventos</p>
+                <p className="text-neutral-400">Abierto por la noche</p>
               </div>
             </div>
           </div>
@@ -98,15 +97,15 @@ const Footer = () => {
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-primary-500 flex-shrink-0 mt-0.5" />
                 <p className="text-neutral-400">
-                  Calle Principal, 1<br />
-                  03820 Benilloba<br />
+                  Plaça la Font, 2<br />
+                  03810 Benilloba<br />
                   Alicante, España
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-primary-500 flex-shrink-0" />
-                <a href="tel:+34965511234" className="text-neutral-400 hover:text-primary-500 transition-colors">
-                  +34 965 511 234
+                <a href="tel:+34722741992" className="text-neutral-400 hover:text-primary-500 transition-colors">
+                  +34 722 74 19 92
                 </a>
               </div>
               <div className="flex items-center gap-3">
@@ -122,7 +121,7 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-semibold text-white mb-6">¡Haz tu Pedido!</h4>
             <p className="text-sm text-neutral-400 mb-6">
-              Disfruta de nuestra deliciosa comida desde la comodidad de tu hogar.
+              Haz tu pedido online y disfruta de nuestros platos cuando y donde quieras.
             </p>
             <Link
               to="/pedido"

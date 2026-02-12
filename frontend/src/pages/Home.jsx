@@ -21,7 +21,7 @@ const Home = () => {
     {
       icon: <Award className="w-8 h-8" />,
       title: 'Experiencia',
-      description: 'Más de 30 años sirviéndote con dedicación y profesionalismo'
+      description: 'Compromiso y dedicación en cada servicio'
     }
   ]
 
@@ -59,7 +59,7 @@ const Home = () => {
           <div className="max-w-3xl">
             <div className="mb-6 inline-block">
               <span className="bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm font-semibold">
-                🍽️ Desde 1994 - Tradición auténtica
+                🍽️ Sabor local, calidad y cercanía
               </span>
             </div>
             
@@ -88,21 +88,22 @@ const Home = () => {
                 <Clock className="w-6 h-6 text-primary-300" />
                 <div>
                   <p className="text-sm text-primary-200">Horario</p>
-                  <p className="font-semibold">11:00 - 23:00</p>
+                  <p className="font-semibold">8:00 - 16:00 (Lunes cerrado)</p>
+                  <p className="text-xs text-primary-200">En fiestas y eventos: abierto por la noche</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <MapPin className="w-6 h-6 text-primary-300" />
                 <div>
                   <p className="text-sm text-primary-200">Ubicación</p>
-                  <p className="font-semibold">Benilloba, Alicante</p>
+                  <p className="font-semibold">Plaça la Font, 2, 03810 Benilloba, Alicante</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-6 h-6 text-primary-300" />
                 <div>
                   <p className="text-sm text-primary-200">Teléfono</p>
-                  <p className="font-semibold">+34 966 XX XX XX</p>
+                  <p className="font-semibold">+34 722 74 19 92</p>
                 </div>
               </div>
             </div>
@@ -140,25 +141,25 @@ const Home = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             {/* Imagen placeholder */}
             <div className="relative">
-              <div className="bg-gradient-to-br from-primary-400 to-primary-700 rounded-xl overflow-hidden h-96 md:h-full flex items-center justify-center">
-                <div className="text-center">
-                  <ChefHat className="w-24 h-24 text-white/50 mx-auto mb-4" />
-                  <p className="text-white/70 text-lg">Tu foto del restaurante aquí</p>
-                </div>
+              <div className="rounded-xl w-full h-96 md:h-full shadow-lg border border-primary-100 bg-neutral-200 flex items-center justify-center overflow-hidden">
+                <img 
+                  src="/restaurante.png"
+                  alt="Restaurante El Casino Benilloba"
+                  className="object-contain w-full h-full"
+                  style={{ objectPosition: 'center' }}
+                />
               </div>
             </div>
 
             {/* Contenido */}
             <div>
               <h2 className="text-4xl font-display font-bold text-neutral-900 mb-6">
-                Tradición desde 1994
+                Tradición y calidad en cada plato
               </h2>
               <p className="text-lg text-neutral-600 mb-4 leading-relaxed">
                 El Casino Benilloba es mucho más que un restaurante. Es un lugar donde generaciones de familias han compartido comidas memorables, donde la tradición culinaria se mezcla con la calidez del trato personalizado.
               </p>
-              <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
-                Cada plato que preparamos es el resultado de años de experiencia, pasión por la cocina y respeto por los ingredientes de calidad. No buscamos ser los más modernos, buscamos ser los mejores en lo que hacemos: cocina tradicional, honesta y deliciosa.
-              </p>
+              {/* Párrafo eliminado por solicitud */}
               
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
