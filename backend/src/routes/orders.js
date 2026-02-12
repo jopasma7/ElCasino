@@ -2,6 +2,7 @@ import express from 'express'
 import { body, validationResult } from 'express-validator'
 import prisma from '../config/database.js'
 import { authMiddleware } from '../middleware/auth.js'
+import { optionalUserAuthMiddleware } from '../middleware/userAuth.js'
 
 const router = express.Router()
 
@@ -27,6 +28,15 @@ router.get('/', authMiddleware, async (req, res) => {
     const orders = await prisma.order.findMany({
       where,
       include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            avatar: true
+          }
+        },
         items: {
           include: {
             dish: true
@@ -49,6 +59,15 @@ router.get('/:id', authMiddleware, async (req, res) => {
     const order = await prisma.order.findUnique({
       where: { id: req.params.id },
       include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            avatar: true
+          }
+        },
         items: {
           include: {
             dish: true
@@ -70,8 +89,9 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
 // POST - Crear nuevo pedido (público)
 router.post('/',
+  optionalUserAuthMiddleware,
   [
-    body('type').isIn(['takeaway', 'delivery']).withMessage('Tipo de pedido inválido'),
+    body('type').isIn(['takeaway', 'dinein']).withMessage('Tipo de pedido inválido'),
     body('customerName').notEmpty().withMessage('El nombre es requerido'),
     body('customerPhone').notEmpty().withMessage('El teléfono es requerido'),
     body('items').isArray({ min: 1 }).withMessage('Debe incluir al menos un item'),
@@ -116,7 +136,9 @@ router.post('/',
           })
         }
 
-        if (!dish.available) {
+        // Si el pedido es del menú del día, ignorar disponibilidad
+        // (isDailyMenu se envía en el body)
+        if (!req.body.isDailyMenu && !dish.available) {
           return res.status(400).json({ 
             error: `El plato ${dish.name} no está disponible` 
           })
@@ -142,6 +164,7 @@ router.post('/',
           customerPhone,
           customerAddress: type === 'delivery' ? customerAddress : null,
           notes,
+          userId: req.user?.userId || null,
           subtotal,
           total,
           items: {
@@ -149,6 +172,15 @@ router.post('/',
           }
         },
         include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              email: true,
+              avatar: true
+            }
+          },
           items: {
             include: {
               dish: true

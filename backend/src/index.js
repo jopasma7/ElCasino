@@ -17,8 +17,10 @@ console.log('🗄️ DATABASE_URL:', process.env.DATABASE_URL ? 'Configurada ✅
 import dishRoutes from './routes/dishes.js'
 import galleryRoutes from './routes/gallery.js'
 import dailyMenuRoutes from './routes/dailyMenu.js'
+import dailyMenuOptionsRoutes from './routes/dailyMenuOptions.js'
 import orderRoutes from './routes/orders.js'
 import authRoutes from './routes/auth.js'
+import userRoutes from './routes/users.js'
 
 console.log('✅ Rutas importadas correctamente')
 
@@ -58,9 +60,11 @@ app.use('/uploads', express.static(join(__dirname, '../uploads')))
 
 // Routes
 app.use('/api/auth', authRoutes)
+app.use('/api/users', userRoutes)
 app.use('/api/dishes', dishRoutes)
 app.use('/api/gallery', galleryRoutes)
 app.use('/api/daily-menu', dailyMenuRoutes)
+app.use('/api/daily-menu-options', dailyMenuOptionsRoutes)
 app.use('/api/orders', orderRoutes)
 
 console.log('✅ Rutas configuradas correctamente')

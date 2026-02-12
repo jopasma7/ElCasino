@@ -8,6 +8,7 @@ import DailyMenu from './pages/DailyMenu'
 import Order from './pages/Order'
 import Contact from './pages/Contact'
 import Admin from './pages/Admin'
+import Account from './pages/Account'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="/menu-del-dia" element={<DailyMenu />} />
             <Route path="/pedido" element={<Order />} />
             <Route path="/contacto" element={<Contact />} />
+            <Route path="/cuenta" element={<Account />} />
             <Route path="/admin" element={<Admin />} />
           </Routes>
         </main>

@@ -16,7 +16,7 @@ const Gallery = () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await galleryAPI.getAll()
+      const response = await galleryAPI.getAll({ visible: true })
       setImages(response.data)
     } catch (error) {
       console.error('Error al cargar galería:', error)

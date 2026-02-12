@@ -9,6 +9,9 @@ export const authMiddleware = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    if (decoded.role !== 'admin') {
+      return res.status(403).json({ error: 'No autorizado - Se requieren permisos de admin' })
+    }
     req.admin = decoded
     next()
   } catch (error) {

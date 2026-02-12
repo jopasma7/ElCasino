@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Menu, X, ChefHat } from 'lucide-react'
+import { userProfileAPI } from '../services/api'
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const location = useLocation()
+  const [userAvatar, setUserAvatar] = useState(null)
+  const [userName, setUserName] = useState(null)
 
   const navLinks = [
     { path: '/', label: 'Inicio' },
@@ -12,9 +15,47 @@ const Navbar = () => {
     { path: '/menu-del-dia', label: 'Menú del Día' },
     { path: '/galeria', label: 'Galería' },
     { path: '/contacto', label: 'Contacto' },
+    { path: '/cuenta', label: 'Cuenta' }
   ]
 
   const isActive = (path) => location.pathname === path
+
+  const loadProfile = async () => {
+    const token = localStorage.getItem('userToken')
+    if (!token) {
+      setUserAvatar(null)
+      setUserName(null)
+      return
+    }
+
+    try {
+      const response = await userProfileAPI.getMe()
+      setUserName(response.data?.name || null)
+      const avatar = response.data?.avatar
+      if (avatar) {
+        const resolved = avatar.startsWith('http')
+          ? avatar
+          : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000'}${avatar}`
+        setUserAvatar(resolved)
+      } else {
+        setUserAvatar('/avatar-default.svg')
+      }
+    } catch (error) {
+      setUserAvatar(null)
+      setUserName(null)
+    }
+  }
+
+  useEffect(() => {
+    loadProfile()
+
+    const handleAuthChange = () => loadProfile()
+    window.addEventListener('user-auth-changed', handleAuthChange)
+
+    return () => {
+      window.removeEventListener('user-auth-changed', handleAuthChange)
+    }
+  }, [])
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
@@ -32,27 +73,46 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`font-medium transition-colors relative group ${
-                  isActive(link.path)
-                    ? 'text-primary-600'
-                    : 'text-neutral-700 hover:text-primary-600'
-                }`}
-              >
-                {link.label}
-                <span
-                  className={`absolute -bottom-1 left-0 h-0.5 bg-primary-600 transition-all ${
-                    isActive(link.path) ? 'w-full' : 'w-0 group-hover:w-full'
+          <div className="hidden md:flex items-center justify-center gap-8 flex-1">
+            <div className="flex items-center gap-8 justify-center">
+              {navLinks.filter(link => link.path !== '/cuenta').map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`font-medium transition-colors relative group ${
+                    isActive(link.path)
+                      ? 'text-primary-600'
+                      : 'text-neutral-700 hover:text-primary-600'
                   }`}
-                />
-              </Link>
-            ))}
+                >
+                  {link.label}
+                  <span
+                    className={`absolute -bottom-1 left-0 h-0.5 bg-primary-600 transition-all ${
+                      isActive(link.path) ? 'w-full' : 'w-0 group-hover:w-full'
+                    }`}
+                  />
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Right actions */}
+          <div className="hidden md:flex items-center gap-5">
             <Link to="/pedido" className="btn-primary">
               Hacer Pedido
+            </Link>
+            <Link
+              to="/cuenta"
+              className="flex items-center gap-3 font-medium text-neutral-700 hover:text-primary-600 transition-colors"
+            >
+              <span className="inline-flex w-10 h-10 rounded-full overflow-hidden shadow-sm bg-neutral-100">
+                <img
+                  src={userAvatar || '/avatar-default.svg'}
+                  alt="Avatar"
+                  className="w-full h-full object-cover"
+                />
+              </span>
+              <span>{userName || 'Cuenta'}</span>
             </Link>
           </div>
 
@@ -68,7 +128,7 @@ const Navbar = () => {
         {/* Mobile Menu */}
         {isOpen && (
           <div className="md:hidden py-4 border-t">
-            {navLinks.map((link) => (
+            {navLinks.filter(link => link.path !== '/cuenta').map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
@@ -82,6 +142,16 @@ const Navbar = () => {
                 {link.label}
               </Link>
             ))}
+            <Link
+              to="/cuenta"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 py-3 px-4 rounded-lg mb-1 text-neutral-700 hover:bg-neutral-50"
+            >
+              <span className="inline-flex w-9 h-9 rounded-full overflow-hidden bg-neutral-100">
+                <img src={userAvatar || '/avatar-default.svg'} alt="Avatar" className="w-full h-full object-cover" />
+              </span>
+              <span>{userName || 'Cuenta'}</span>
+            </Link>
             <Link
               to="/pedido"
               onClick={() => setIsOpen(false)}

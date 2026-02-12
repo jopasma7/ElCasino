@@ -2,17 +2,39 @@ import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
 
-// Crear instancia de axios
-const api = axios.create({
+// Crear instancias de axios
+const publicApi = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json'
   }
 })
 
-// Interceptor para añadir token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
+const adminApi = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
+const userApi = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
+// Interceptores para añadir token
+adminApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem('adminToken')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+userApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem('userToken')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -21,53 +43,75 @@ api.interceptors.request.use((config) => {
 
 // Auth API
 export const authAPI = {
-  login: (password) => api.post('/auth/login', { password }),
-  verify: () => api.get('/auth/verify')
+  login: (password) => publicApi.post('/auth/login', { password }),
+  verify: () => adminApi.get('/auth/verify')
+}
+
+// Users API
+export const userAuthAPI = {
+  register: (formData) => publicApi.post('/users/register', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  login: (data) => publicApi.post('/users/login', data)
+}
+
+export const userProfileAPI = {
+  getMe: () => userApi.get('/users/me'),
+  updateMe: (formData) => userApi.put('/users/me', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
 }
 
 // Dishes API
 export const dishesAPI = {
-  getAll: (params) => api.get('/dishes', { params }),
-  getById: (id) => api.get(`/dishes/${id}`),
-  create: (formData) => api.post('/dishes', formData, {
+  getAll: (params) => publicApi.get('/dishes', { params }),
+  getById: (id) => publicApi.get(`/dishes/${id}`),
+  create: (formData) => adminApi.post('/dishes', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  update: (id, formData) => api.put(`/dishes/${id}`, formData, {
+  update: (id, formData) => adminApi.put(`/dishes/${id}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  delete: (id) => api.delete(`/dishes/${id}`)
+  delete: (id) => adminApi.delete(`/dishes/${id}`)
 }
 
 // Gallery API
 export const galleryAPI = {
-  getAll: () => api.get('/gallery'),
-  getById: (id) => api.get(`/gallery/${id}`),
-  create: (formData) => api.post('/gallery', formData, {
+  getAll: (params) => publicApi.get('/gallery', { params }),
+  getById: (id) => publicApi.get(`/gallery/${id}`),
+  create: (formData) => adminApi.post('/gallery', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  update: (id, formData) => api.put(`/gallery/${id}`, formData, {
+  update: (id, formData) => adminApi.put(`/gallery/${id}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  delete: (id) => api.delete(`/gallery/${id}`)
+  delete: (id) => adminApi.delete(`/gallery/${id}`)
 }
 
 // Daily Menu API
 export const dailyMenuAPI = {
-  getToday: () => api.get('/daily-menu/today'),
-  getAll: () => api.get('/daily-menu'),
-  getById: (id) => api.get(`/daily-menu/${id}`),
-  create: (data) => api.post('/daily-menu', data),
-  update: (id, data) => api.put(`/daily-menu/${id}`, data),
-  delete: (id) => api.delete(`/daily-menu/${id}`)
+  getToday: () => publicApi.get('/daily-menu/today'),
+  getAll: () => adminApi.get('/daily-menu'),
+  getById: (id) => adminApi.get(`/daily-menu/${id}`),
+  create: (data) => adminApi.post('/daily-menu', data),
+  update: (id, data) => adminApi.put(`/daily-menu/${id}`, data),
+  delete: (id) => adminApi.delete(`/daily-menu/${id}`)
+}
+
+// Daily Menu Options API (admin)
+export const dailyMenuOptionsAPI = {
+  getAll: () => adminApi.get('/daily-menu-options'),
+  create: (data) => adminApi.post('/daily-menu-options', data),
+  remove: (id) => adminApi.delete(`/daily-menu-options/${id}`)
 }
 
 // Orders API
 export const ordersAPI = {
-  getAll: (params) => api.get('/orders', { params }),
-  getById: (id) => api.get(`/orders/${id}`),
-  create: (data) => api.post('/orders', data),
-  updateStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
-  cancel: (id) => api.delete(`/orders/${id}`)
+  getAll: (params) => adminApi.get('/orders', { params }),
+  getById: (id) => adminApi.get(`/orders/${id}`),
+  create: (data) => userApi.post('/orders', data),
+  updateStatus: (id, status) => adminApi.put(`/orders/${id}/status`, { status }),
+  cancel: (id) => adminApi.delete(`/orders/${id}`)
 }
 
-export default api
+export default publicApi

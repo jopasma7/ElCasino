@@ -71,6 +71,8 @@ router.post('/',
   authMiddleware,
   [
     body('price').isFloat({ min: 0 }).withMessage('El precio debe ser mayor a 0'),
+    body('singleDishPrice').optional().isFloat({ min: 0 }).withMessage('El precio del plato único debe ser mayor a 0'),
+    body('completeSingleDishPrice').optional().isFloat({ min: 0 }).withMessage('El precio del menú completo 1 plato debe ser mayor a 0'),
     body('includes').isArray().withMessage('Includes debe ser un array'),
     body('starters').isArray().withMessage('Starters debe ser un array'),
     body('mains').isArray().withMessage('Mains debe ser un array'),
@@ -83,16 +85,32 @@ router.post('/',
         return res.status(400).json({ errors: errors.array() })
       }
 
-      const { date, price, includes, starters, mains, desserts, active } = req.body
+      const { date, price, singleDishPrice, completeSingleDishPrice, includes, starters, mains, desserts, active } = req.body
 
       // Si no se proporciona fecha, usar la fecha actual
       const menuDate = date ? new Date(date) : new Date()
       menuDate.setHours(0, 0, 0, 0)
 
-      const menu = await prisma.dailyMenu.create({
-        data: {
+      // Usar upsert para actualizar si existe o crear si no existe
+      const menu = await prisma.dailyMenu.upsert({
+        where: {
+          date: menuDate
+        },
+        update: {
+          price: parseFloat(price),
+          singleDishPrice: singleDishPrice ? parseFloat(singleDishPrice) : null,
+          completeSingleDishPrice: completeSingleDishPrice ? parseFloat(completeSingleDishPrice) : null,
+          includes,
+          starters,
+          mains,
+          desserts,
+          active: active !== undefined ? active : true
+        },
+        create: {
           date: menuDate,
           price: parseFloat(price),
+          singleDishPrice: singleDishPrice ? parseFloat(singleDishPrice) : null,
+          completeSingleDishPrice: completeSingleDishPrice ? parseFloat(completeSingleDishPrice) : null,
           includes,
           starters,
           mains,
@@ -112,10 +130,12 @@ router.post('/',
 // PUT - Actualizar menú del día (requiere autenticación)
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const { price, includes, starters, mains, desserts, active } = req.body
+    const { price, singleDishPrice, completeSingleDishPrice, includes, starters, mains, desserts, active } = req.body
 
     const updateData = {
       ...(price && { price: parseFloat(price) }),
+      ...(singleDishPrice !== undefined && { singleDishPrice: singleDishPrice ? parseFloat(singleDishPrice) : null }),
+      ...(completeSingleDishPrice !== undefined && { completeSingleDishPrice: completeSingleDishPrice ? parseFloat(completeSingleDishPrice) : null }),
       ...(includes && { includes }),
       ...(starters && { starters }),
       ...(mains && { mains }),

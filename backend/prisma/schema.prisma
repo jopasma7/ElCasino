@@ -18,6 +18,13 @@ enum DishCategory {
   bebidas
 }
 
+// Opciones rápidas del menú del día
+enum DailyMenuOptionType {
+  starter
+  main
+  dessert
+}
+
 // Platos de la carta
 model Dish {
   id          String        @id @default(uuid())
@@ -41,24 +48,43 @@ model GalleryImage {
   title     String
   category  String
   url       String
+  visible   Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   @@map("gallery_images")
 }
 
+// Usuarios registrados
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  phone        String   @unique
+  email        String   @unique
+  passwordHash String
+  avatar       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders       Order[]
+
+  @@map("users")
+}
+
 // Menú del día
 model DailyMenu {
-  id        String   @id @default(uuid())
-  date      DateTime @unique @default(now())
-  price     Float
-  includes  String[] // Array de strings: ["Primero", "Segundo", "Postre", "Bebida"]
-  starters  String[] // Array de primeros platos
-  mains     String[] // Array de segundos platos
-  desserts  String[] // Array de postres
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(uuid())
+  date            DateTime @unique @default(now())
+  price           Float
+  singleDishPrice Float?
+  completeSingleDishPrice Float?
+  includes        String[] // Array de strings: ["Primero", "Segundo", "Postre", "Bebida"]
+  starters        String[] // Array de primeros platos
+  mains           String[] // Array de segundos platos
+  desserts        String[] // Array de postres
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
   
   @@map("daily_menus")
 }
@@ -66,7 +92,7 @@ model DailyMenu {
 // Tipo de pedido
 enum OrderType {
   takeaway
-  delivery
+  dinein
 }
 
 // Estado del pedido
@@ -85,6 +111,9 @@ model Order {
   orderNumber  Int         @unique @default(autoincrement())
   type         OrderType
   status       OrderStatus @default(pending)
+
+  userId       String?
+  user         User?       @relation(fields: [userId], references: [id])
   
   // Información del cliente
   customerName    String
@@ -120,6 +149,18 @@ model OrderItem {
   createdAt DateTime @default(now())
   
   @@map("order_items")
+}
+
+// Opciones rápidas para el menú del día
+model DailyMenuOption {
+  id        String              @id @default(uuid())
+  name      String
+  type      DailyMenuOptionType
+  active    Boolean             @default(true)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@map("daily_menu_options")
 }
 
 // Administradores (opcional para futuro)

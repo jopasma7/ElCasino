@@ -9,7 +9,14 @@ const router = express.Router()
 // GET - Obtener todas las imágenes de la galería (público)
 router.get('/', async (req, res) => {
   try {
+    const { visible } = req.query
+    const where = {}
+    if (visible !== undefined) {
+      where.visible = visible === 'true'
+    }
+
     const images = await prisma.galleryImage.findMany({
+      where,
       orderBy: { createdAt: 'desc' }
     })
     
@@ -53,7 +60,7 @@ router.post('/',
         }
 
         // Validación
-        const { title, category, url } = req.body
+        const { title, category, url, visible } = req.body
         
         if (!title) {
           return res.status(400).json({ error: 'El título es requerido' })
@@ -74,7 +81,8 @@ router.post('/',
           data: {
             title,
             category,
-            url: finalUrl
+            url: finalUrl,
+            visible: visible !== undefined ? visible === 'true' : true
           }
         })
 
@@ -93,13 +101,14 @@ router.put('/:id',
   upload.single('image'),
   async (req, res) => {
     try {
-      const { title, category } = req.body
+      const { title, category, visible } = req.body
       const url = req.file ? `/uploads/${req.file.filename}` : undefined
 
       const updateData = {
         ...(title && { title }),
         ...(category && { category }),
-        ...(url && { url })
+        ...(url && { url }),
+        ...(visible !== undefined && { visible: visible === 'true' })
       }
 
       const image = await prisma.galleryImage.update({

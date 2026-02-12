@@ -48,7 +48,14 @@ router.get('/:id', async (req, res) => {
 // POST - Crear nuevo plato (requiere autenticación)
 router.post('/',
   authMiddleware,
-  upload.single('image'),
+  (req, res, next) => {
+    // Si es JSON, saltamos multer
+    if (req.headers['content-type']?.includes('application/json')) {
+      return next()
+    }
+    // Si es FormData, usamos multer
+    upload.single('image')(req, res, next)
+  },
   [
     body('name').notEmpty().withMessage('El nombre es requerido'),
     body('description').notEmpty().withMessage('La descripción es requerida'),
@@ -63,8 +70,28 @@ router.post('/',
         return res.status(400).json({ errors: errors.array() })
       }
 
+      console.log('📥 Body recibido:', {
+        name: req.body.name,
+        image: req.body.image,
+        hasFile: !!req.file,
+        contentType: req.headers['content-type']
+      })
+
       const { name, description, price, category, available } = req.body
-      const image = req.file ? `/uploads/${req.file.filename}` : null
+      let image = null
+      
+      // Si hay un archivo subido, usar la ruta local
+      if (req.file) {
+        image = `/uploads/${req.file.filename}`
+        console.log('✅ Usando archivo subido:', image)
+      }
+      // Si viene una URL externa en el body (para seeds), usarla directamente
+      else if (req.body.image && req.body.image.startsWith('http')) {
+        image = req.body.image
+        console.log('✅ Usando URL externa:', image)
+      }
+
+      console.log('💾 Guardando plato con imagen:', image)
 
       const dish = await prisma.dish.create({
         data: {
@@ -73,7 +100,7 @@ router.post('/',
           price: parseFloat(price),
           category,
           image,
-          available: available !== undefined ? available === 'true' : true
+          available: available !== undefined ? (typeof available === 'boolean' ? available : available === 'true') : true
         }
       })
 
@@ -92,7 +119,16 @@ router.put('/:id',
   async (req, res) => {
     try {
       const { name, description, price, category, available } = req.body
-      const image = req.file ? `/uploads/${req.file.filename}` : undefined
+      let image = undefined
+      
+      // Si hay un archivo subido, usar la ruta local
+      if (req.file) {
+        image = `/uploads/${req.file.filename}`
+      }
+      // Si viene una URL externa en el body, usarla directamente
+      else if (req.body.image && req.body.image.startsWith('http')) {
+        image = req.body.image
+      }
 
       const updateData = {
         ...(name && { name }),
@@ -100,7 +136,7 @@ router.put('/:id',
         ...(price && { price: parseFloat(price) }),
         ...(category && { category }),
         ...(available !== undefined && { available: available === 'true' }),
-        ...(image && { image })
+        ...(image !== undefined && { image })
       }
 
       const dish = await prisma.dish.update({
