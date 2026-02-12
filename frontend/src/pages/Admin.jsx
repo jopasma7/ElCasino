@@ -1,4 +1,29 @@
 import { useState, useEffect } from 'react'
+
+// Imagen de plato con fallback si falla
+function DishImage({ src, name }) {
+  const [error, setError] = useState(false);
+  if (!src || error) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-neutral-400">
+        <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      </div>
+    );
+  }
+  const url = src.startsWith('http')
+    ? src
+    : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000'}${src}`;
+  return (
+    <img
+      src={url}
+      alt={name}
+      className="w-full h-full object-cover"
+      onError={() => setError(true)}
+    />
+  );
+}
 import { Lock, Plus, Edit, Trash2, LogOut, ClipboardList, Eye, EyeOff, X } from 'lucide-react'
 import { authAPI, dishesAPI, galleryAPI, dailyMenuAPI, dailyMenuOptionsAPI, ordersAPI } from '../services/api'
 
@@ -236,6 +261,7 @@ const DishesManager = () => {
       image: null
     })
     setShowForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleCreate = async (e) => {
@@ -451,26 +477,7 @@ const DishesManager = () => {
             >
               {/* Imagen del plato */}
               <div className="relative h-48 bg-neutral-100">
-                {dish.image ? (
-                  <img
-                    src={dish.image.startsWith('http')
-                      ? dish.image
-                      : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000'}${dish.image}`
-                    }
-                    alt={dish.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = 'none'
-                      e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center text-neutral-400"><svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>'
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-neutral-400">
-                    <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                )}
+                <DishImage src={dish.image} name={dish.name} />
                 {!dish.available && (
                   <div className="absolute top-2 left-2 px-2 py-1 bg-red-600 text-white text-xs font-medium rounded">
                     No disponible
@@ -715,7 +722,6 @@ const DailyMenuManager = () => {
   const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     price: '11.50',
-    singleDishPrice: '10.00',
     completeSingleDishPrice: '8.50',
     starters: '',
     mains: '',
@@ -740,7 +746,6 @@ const DailyMenuManager = () => {
       if (response.data) {
         setFormData({
           price: response.data.price.toString(),
-          singleDishPrice: response.data.singleDishPrice?.toString() || '10.00',
           completeSingleDishPrice: response.data.completeSingleDishPrice?.toString() || '8.50',
           starters: response.data.starters.join('\n'),
           mains: response.data.mains.join('\n'),
@@ -820,7 +825,6 @@ const DailyMenuManager = () => {
     
     const menuData = {
       price: parseFloat(formData.price),
-      singleDishPrice: parseFloat(formData.singleDishPrice),
       completeSingleDishPrice: parseFloat(formData.completeSingleDishPrice),
       includes: ['Primero', 'Segundo', 'Postre o Café', 'Pan y Bebida'],
       starters: formData.starters.split('\n').filter(Boolean),
@@ -839,10 +843,41 @@ const DailyMenuManager = () => {
   if (loading) {
     return <div className="text-center py-8">Cargando...</div>
   }
+  // Eliminar menú del día
+  const handleDeleteMenu = async () => {
+    if (!window.confirm('¿Seguro que quieres eliminar el menú del día? Esta acción no se puede deshacer.')) return;
+    try {
+      // Obtener el menú actual (solo si existe)
+      const response = await dailyMenuAPI.getToday();
+      if (response.data && response.data.id) {
+        await dailyMenuAPI.delete(response.data.id);
+        alert('Menú eliminado correctamente');
+        setFormData({
+          price: '',
+          completeSingleDishPrice: '',
+          starters: '',
+          mains: '',
+          desserts: ''
+        });
+      } else {
+        alert('No hay menú del día para eliminar');
+      }
+    } catch (error) {
+      alert('Error al eliminar el menú');
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">Menú del Día</h2>
+        <button
+          type="button"
+          className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors"
+          onClick={handleDeleteMenu}
+        >
+          Eliminar Menú
+        </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -875,19 +910,6 @@ const DailyMenuManager = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              Precio del Menú 1 Plato (€)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              className="input-field"
-              value={formData.singleDishPrice}
-              onChange={(e) => setFormData({ ...formData, singleDishPrice: e.target.value })}
-              required
-            />
-          </div>
         </div>
 
         <div className="border border-neutral-200 rounded-lg p-5 space-y-4">
