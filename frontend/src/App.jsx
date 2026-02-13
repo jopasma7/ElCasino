@@ -12,9 +12,15 @@ import TPV from './pages/TPV'
 import Account from './pages/Account'
 import Members from './pages/Members'
 
+import { useEffect } from 'react';
 function AppLayout() {
   const location = useLocation();
   const hideFooter = location.pathname === '/tpv';
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen flex flex-col">

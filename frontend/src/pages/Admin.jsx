@@ -55,15 +55,12 @@ const Admin = () => {
     )
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.location.reload();
-  };
+
 
   return (
     <div className="py-12 bg-neutral-50 min-h-screen">
       <div className="container mx-auto px-4">
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-8 flex items-center">
           <div>
             <h1 className="text-4xl font-display font-bold text-neutral-900 mb-2">
               Panel de Administración
@@ -72,13 +69,6 @@ const Admin = () => {
               Gestiona el contenido de tu restaurante
             </p>
           </div>
-          <button 
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 bg-neutral-200 hover:bg-neutral-300 rounded-lg transition-colors"
-          >
-            <LogOut className="w-5 h-5" />
-            Cerrar Sesión
-          </button>
         </div>
 
         {/* Tabs */}

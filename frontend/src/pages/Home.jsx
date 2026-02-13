@@ -46,7 +46,7 @@ const Home = () => {
   return (
     <div className="bg-white">
       {/* Hero Section Mejorado */}
-      <section className="relative min-h-[70vh] md:h-[600px] flex items-center overflow-hidden">
+      <section className="relative min-h-[70vh] md:h-[600px] flex items-center overflow-hidden pt-14 sm:pt-0">
         {/* Background Image con overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary-900 via-primary-800 to-primary-700">
           <div className="absolute inset-0 opacity-40" style={{
@@ -63,7 +63,7 @@ const Home = () => {
               </span>
             </div>
             
-            <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-7xl font-display font-bold text-white mb-4 sm:mb-6 leading-tight">
+            <h1 className="text-2xl xs:text-3xl sm:text-5xl md:text-7xl font-display font-bold text-white mb-4 sm:mb-6 leading-tight">
               El Casino<br />Benilloba
             </h1>
             
@@ -72,12 +72,12 @@ const Home = () => {
               Donde cada comida es una experiencia única con sabor a casa.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <Link to="/menu-del-dia" className="bg-white text-primary-700 hover:bg-primary-50 px-5 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold inline-flex items-center justify-center gap-2 transition-all transform hover:scale-105 text-base sm:text-lg">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+              <Link to="/menu-del-dia" className="bg-white text-primary-700 hover:bg-primary-50 px-4 py-2 sm:px-8 sm:py-4 rounded-lg font-semibold inline-flex items-center justify-center gap-2 transition-all transform hover:scale-105 text-sm sm:text-lg">
                 Ver Menú del Día
                 <ArrowRight className="w-5 h-5" />
               </Link>
-              <Link to="/pedido" className="bg-primary-500 hover:bg-primary-600 text-white px-5 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold inline-flex items-center justify-center transition-all transform hover:scale-105 text-base sm:text-lg">
+              <Link to="/pedido" className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 sm:px-8 sm:py-4 rounded-lg font-semibold inline-flex items-center justify-center transition-all transform hover:scale-105 text-sm sm:text-lg">
                 Hacer un Pedido
               </Link>
             </div>
