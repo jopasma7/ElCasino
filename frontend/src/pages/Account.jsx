@@ -8,6 +8,13 @@ const Account = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
+
+  // DEBUG: Mostrar el objeto profile en consola para verificar el campo role
+  useEffect(() => {
+    if (profile) {
+      console.log('Perfil cargado:', profile)
+    }
+  }, [profile])
   const [loginData, setLoginData] = useState({ email: '', password: '' })
   const [registerData, setRegisterData] = useState({
     name: '',
@@ -250,6 +257,13 @@ const Account = () => {
           <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8">
             <div className="rounded-2xl bg-neutral-900 text-white p-6 shadow-xl">
               <div className="flex flex-col items-center text-center">
+                {profile?.role === 'Administrador' && (
+                  <div className="flex justify-center mb-4">
+                    <span className="px-2 py-0.5 rounded bg-yellow-400 text-yellow-900 text-xs font-bold uppercase shadow-sm border border-yellow-300 animate-pulse">
+                      Administrador
+                    </span>
+                  </div>
+                )}
                 <div className="w-28 h-28 rounded-full bg-neutral-800 overflow-hidden mb-4 ring-4 ring-white/10">
                   {currentAvatar ? (
                     <img src={currentAvatar} alt="Avatar" className="w-full h-full object-cover" />
