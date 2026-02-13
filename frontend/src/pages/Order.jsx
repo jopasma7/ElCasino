@@ -60,7 +60,7 @@ const Order = () => {
   }
 
   const hydrateUserProfile = async () => {
-    const token = localStorage.getItem('userToken')
+    const token = localStorage.getItem('token')
     if (!token) return
 
     try {
@@ -248,29 +248,23 @@ const Order = () => {
   }
 
   return (
-    <div className="py-12 bg-neutral-50">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-display font-bold text-neutral-900 mb-4">
-            Hacer Pedido
-          </h1>
-          <p className="text-lg text-neutral-600">
-            Pide nuestro delicioso menú del día
-          </p>
-        </div>
+  <div className="py-12 bg-neutral-50">
+    <div className="container mx-auto px-4">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl md:text-5xl font-display font-bold text-neutral-900 mb-4">
+          Hacer Pedido
+        </h1>
+        <p className="text-lg text-neutral-600">
+          Pide nuestro delicioso menú del día
+        </p>
+      </div>
 
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-            <p className="mt-4 text-neutral-600">Cargando menú del día...</p>
-          </div>
-        ) : !dailyMenu ? (
-          <div className="text-center py-12">
-            <Clock className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-neutral-900 mb-2">No hay menú del día disponible</h2>
-            <p className="text-neutral-600">Por favor, vuelve más tarde o contacta con el restaurante.</p>
-          </div>
-        ) : (
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          <p className="mt-4 text-neutral-600">Cargando menú del día...</p>
+        </div>
+      ) : dailyMenu ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Menu Options */}
             <div className="lg:col-span-2 space-y-6">
@@ -291,10 +285,16 @@ const Order = () => {
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <h3 className="text-xl font-bold text-neutral-900 mb-2">Menú Completo (2 Platos)</h3>
-                        <p className="text-sm text-neutral-600 mb-3">{dailyMenu.includes.join(' • ')}</p>
+                        <p className="text-sm text-neutral-600 mb-3">
+                          {Array.isArray(dailyMenu.includes)
+                            ? dailyMenu.includes.join(' • ')
+                            : 'Sin información de platos'}
+                        </p>
                       </div>
                       <div className="text-right">
-                        <span className="text-2xl font-bold text-primary-600">€{dailyMenu.price.toFixed(2)}</span>
+                        <span className="text-2xl font-bold text-primary-600">
+                          €{typeof dailyMenu.price === 'number' ? dailyMenu.price.toFixed(2) : '--'}
+                        </span>
                       </div>
                     </div>
 
@@ -309,9 +309,12 @@ const Order = () => {
                           className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
                         >
                           <option value="">Selecciona...</option>
-                          {dailyMenu.starters.map((starter, idx) => (
-                            <option key={idx} value={starter}>{starter}</option>
-                          ))}
+                          {Array.isArray(dailyMenu.starters)
+                            ? dailyMenu.starters.map((starter, idx) => (
+                                <option key={idx} value={starter}>{starter}</option>
+                              ))
+                            : <option disabled value="">No hay primeros disponibles</option>
+                          }
                         </select>
                       </div>
 
@@ -325,9 +328,12 @@ const Order = () => {
                           className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
                         >
                           <option value="">Selecciona...</option>
-                          {dailyMenu.mains.map((main, idx) => (
-                            <option key={idx} value={main}>{main}</option>
-                          ))}
+                          {Array.isArray(dailyMenu.mains)
+                            ? dailyMenu.mains.map((main, idx) => (
+                                <option key={idx} value={main}>{main}</option>
+                              ))
+                            : <option disabled value="">No hay segundos disponibles</option>
+                          }
                         </select>
                       </div>
 
@@ -341,9 +347,12 @@ const Order = () => {
                           className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
                         >
                           <option value="">Selecciona...</option>
-                          {dailyMenu.desserts.map((dessert, idx) => (
-                            <option key={idx} value={dessert}>{dessert}</option>
-                          ))}
+                          {Array.isArray(dailyMenu.desserts)
+                            ? dailyMenu.desserts.map((dessert, idx) => (
+                                <option key={idx} value={dessert}>{dessert}</option>
+                              ))
+                            : <option disabled value="">No hay postres disponibles</option>
+                          }
                         </select>
                       </div>
                     </div>
@@ -589,9 +598,15 @@ const Order = () => {
               </div>
             </div>
           </div>
-        )}
-      </div>
+        ) : (
+        <div className="text-center py-12">
+          <Clock className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-neutral-900 mb-2">El menú del día aún no está disponible</h2>
+          <p className="text-neutral-600">Vuelve a consultar más tarde.</p>
+        </div>
+      )}
     </div>
+  </div>
   )
 }
 

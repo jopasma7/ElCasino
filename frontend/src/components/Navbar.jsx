@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useAdmin } from '../hooks/useAdmin'
 import { Link, useLocation } from 'react-router-dom'
 import { Menu, X, ChefHat } from 'lucide-react'
 import { userProfileAPI } from '../services/api'
@@ -8,6 +9,7 @@ const Navbar = () => {
   const location = useLocation()
   const [userAvatar, setUserAvatar] = useState(null)
   const [userName, setUserName] = useState(null)
+  const { isAdmin, loading } = useAdmin()
 
   const navLinks = [
     { path: '/', label: 'Inicio' },
@@ -16,13 +18,17 @@ const Navbar = () => {
     { path: '/galeria', label: 'Galería' },
     { path: '/miembros', label: 'Miembros' },
     { path: '/contacto', label: 'Contacto' },
+    ...(isAdmin ? [
+      { path: '/admin', label: 'Admin' },
+      { path: '/tpv', label: 'TPV' }
+    ] : []),
     { path: '/cuenta', label: 'Cuenta' }
   ]
 
   const isActive = (path) => location.pathname === path
 
   const loadProfile = async () => {
-    const token = localStorage.getItem('userToken')
+    const token = localStorage.getItem('token')
     if (!token) {
       setUserAvatar(null)
       setUserName(null)

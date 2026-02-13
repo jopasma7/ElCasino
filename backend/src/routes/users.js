@@ -127,25 +127,56 @@ router.post('/login',
   }
 )
 
-// Obtener todos los usuarios (público)
+// Obtener usuarios con paginación y filtros (público)
 router.get('/', async (req, res) => {
   try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        avatar: true,
-        role: true
-      }
-    })
-    res.json(users)
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 20;
+    const search = req.query.search || '';
+    const role = req.query.role || '';
+
+    const where = {};
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+    if (role) {
+      where.role = role;
+    }
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          avatar: true,
+          role: true
+        },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy: { name: 'asc' }
+      }),
+      prisma.user.count({ where })
+    ]);
+
+    res.json({
+      users,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize)
+    });
   } catch (error) {
-    console.error('Error al obtener usuarios:', error)
-    res.status(500).json({ error: 'Error al obtener usuarios' })
+    console.error('Error al obtener usuarios:', error);
+    res.status(500).json({ error: 'Error al obtener usuarios' });
   }
-})
+});
 
 // Perfil del usuario autenticado
 router.get('/me', userAuthMiddleware, async (req, res) => {

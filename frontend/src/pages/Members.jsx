@@ -8,21 +8,36 @@ import withReactContent from 'sweetalert2-react-content'
 const Members = () => {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [totalPages, setTotalPages] = useState(1)
+  const [search, setSearch] = useState('')
+  const [role, setRole] = useState('')
   const { isAdmin, loading: adminLoading } = useAdmin()
 
-  useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        const response = await usersAPI.getAll()
-        setMembers(response.data)
-      } catch (error) {
-        setMembers([])
-      } finally {
-        setLoading(false)
-      }
+  const fetchMembers = async (params = {}) => {
+    setLoading(true)
+    try {
+      const response = await usersAPI.getAll({
+        page,
+        pageSize,
+        search,
+        role,
+        ...params
+      })
+      setMembers(response.data.users)
+      setTotalPages(response.data.totalPages)
+    } catch (error) {
+      setMembers([])
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchMembers()
-  }, [])
+    // eslint-disable-next-line
+  }, [page, pageSize, search, role])
 
   const MySwal = withReactContent(Swal)
 
@@ -86,42 +101,92 @@ const Members = () => {
   return (
     <div className="max-w-4xl mx-auto py-10">
       <h1 className="text-3xl font-bold mb-8 text-center">Miembros registrados</h1>
+      {/* Filtros de búsqueda */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
+        <div className="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
+          <label htmlFor="searchMembers" className="font-medium text-neutral-700">Filtro:</label>
+          <input
+            id="searchMembers"
+            type="text"
+            placeholder="Buscar por nombre, email o teléfono"
+            value={search}
+            onChange={e => { setPage(1); setSearch(e.target.value) }}
+            className="border rounded-lg px-3 py-2 w-full md:w-96"
+          />
+        </div>
+        {isAdmin && (
+          <select
+            value={role}
+            onChange={e => { setPage(1); setRole(e.target.value) }}
+            className="border rounded-lg px-3 py-2 w-full md:w-48"
+          >
+            <option value="">Todos los roles</option>
+            <option value="Administrador">Administrador</option>
+            <option value="Usuario">Usuario</option>
+          </select>
+        )}
+      </div>
       {loading || adminLoading ? (
         <div className="text-center text-neutral-500">Cargando...</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {members.map(user => (
-            <div key={user.id} className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-              <img
-                src={user.avatar ? (user.avatar.startsWith('http') ? user.avatar : `https://elcasino-backend.zeabur.app${user.avatar}`) : '/default-avatar.png'}
-                alt={user.name}
-                className="w-24 h-24 rounded-full object-cover mb-4 border border-neutral-200"
-              />
-              <div className="text-lg font-semibold text-neutral-900 mb-1">{user.name}</div>
-              <div className="text-sm text-neutral-500">{user.email}</div>
-              {isAdmin && (
-                <div className="mt-4 flex gap-2">
-                  <button
-                    onClick={() => handleChangeRole(user)}
-                    className={`px-4 py-1.5 rounded-lg font-semibold text-xs shadow transition-all duration-150 border focus:outline-none focus:ring-2 focus:ring-yellow-400/60
-                      ${user.role === 'Administrador'
-                        ? 'bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200 hover:text-yellow-900'
-                        : 'bg-neutral-900 text-white border-neutral-800 hover:bg-yellow-400 hover:text-yellow-900 hover:border-yellow-400'}
-                    `}
-                  >
-                    {user.role === 'Administrador' ? 'Quitar Admin' : 'Asignar Admin'}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(user)}
-                    className="px-4 py-1.5 rounded-lg font-semibold text-xs shadow transition-all duration-150 border border-red-300 bg-red-100 text-red-700 hover:bg-red-600 hover:text-white hover:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-400/60"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {members.map(user => (
+              <div key={user.id} className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
+                <img
+                  src={user.avatar ? (user.avatar.startsWith('http') ? user.avatar : `https://elcasino-backend.zeabur.app${user.avatar}`) : '/default-avatar.png'}
+                  alt={user.name}
+                  className="w-24 h-24 rounded-full object-cover mb-4 border border-neutral-200"
+                />
+                <div className="text-lg font-semibold text-neutral-900 mb-1">{user.name}</div>
+                <div className="text-sm text-neutral-500">{user.email}</div>
+                {isAdmin && (
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      onClick={() => handleChangeRole(user)}
+                      className={`px-4 py-1.5 rounded-lg font-semibold text-xs shadow transition-all duration-150 border focus:outline-none focus:ring-2 focus:ring-yellow-400/60
+                        ${user.role === 'Administrador'
+                          ? 'bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200 hover:text-yellow-900'
+                          : 'bg-neutral-900 text-white border-neutral-800 hover:bg-yellow-400 hover:text-yellow-900 hover:border-yellow-400'}
+                      `}
+                    >
+                      {user.role === 'Administrador' ? 'Quitar Admin' : 'Asignar Admin'}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(user)}
+                      className="px-4 py-1.5 rounded-lg font-semibold text-xs shadow transition-all duration-150 border border-red-300 bg-red-100 text-red-700 hover:bg-red-600 hover:text-white hover:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-400/60"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          {/* Paginación */}
+          <div className="flex justify-center items-center gap-2 mt-8">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-1 rounded bg-neutral-200 hover:bg-neutral-300 disabled:opacity-50"
+            >Anterior</button>
+            <span className="mx-2">Página {page} de {totalPages}</span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-3 py-1 rounded bg-neutral-200 hover:bg-neutral-300 disabled:opacity-50"
+            >Siguiente</button>
+            <select
+              value={pageSize}
+              onChange={e => { setPage(1); setPageSize(Number(e.target.value)) }}
+              className="ml-4 border rounded px-2 py-1"
+            >
+              {[10, 20, 50, 100].map(size => (
+                <option key={size} value={size}>{size} por página</option>
+              ))}
+            </select>
+          </div>
+        </>
       )}
     </div>
   )

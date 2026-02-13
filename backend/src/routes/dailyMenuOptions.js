@@ -1,12 +1,12 @@
 import express from 'express'
 import { body, validationResult } from 'express-validator'
 import prisma from '../config/database.js'
-import { authMiddleware } from '../middleware/auth.js'
+import { adminAuthMiddleware } from '../middleware/adminAuth.js'
 
 const router = express.Router()
 
 // GET - Obtener opciones del menú diario (admin)
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', adminAuthMiddleware, async (req, res) => {
   try {
     const options = await prisma.dailyMenuOption.findMany({
       where: { active: true },
@@ -22,7 +22,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
 // POST - Crear opción del menú diario (admin)
 router.post('/',
-  authMiddleware,
+  adminAuthMiddleware,
   [
     body('name').notEmpty().withMessage('El nombre es requerido'),
     body('type').isIn(['starter', 'main', 'dessert']).withMessage('Tipo inválido')
@@ -52,7 +52,7 @@ router.post('/',
 )
 
 // DELETE - Eliminar opción (admin)
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', adminAuthMiddleware, async (req, res) => {
   try {
     await prisma.dailyMenuOption.update({
       where: { id: req.params.id },

@@ -1,7 +1,7 @@
 import express from 'express'
 import { body, validationResult } from 'express-validator'
 import prisma from '../config/database.js'
-import { authMiddleware } from '../middleware/auth.js'
+import { adminAuthMiddleware } from '../middleware/adminAuth.js'
 
 const router = express.Router()
 
@@ -24,7 +24,7 @@ router.get('/today', async (req, res) => {
     })
 
     if (!menu) {
-      return res.status(404).json({ error: 'No hay menú del día disponible' })
+      return res.status(200).json({ menu: null })
     }
 
     res.json(menu)
@@ -35,7 +35,7 @@ router.get('/today', async (req, res) => {
 })
 
 // GET - Obtener todos los menús (requiere autenticación)
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', adminAuthMiddleware, async (req, res) => {
   try {
     const menus = await prisma.dailyMenu.findMany({
       orderBy: { date: 'desc' }
@@ -49,7 +49,7 @@ router.get('/', authMiddleware, async (req, res) => {
 })
 
 // GET - Obtener menú por ID (requiere autenticación)
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id', adminAuthMiddleware, async (req, res) => {
   try {
     const menu = await prisma.dailyMenu.findUnique({
       where: { id: req.params.id }
@@ -68,7 +68,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
 // POST - Crear nuevo menú del día (requiere autenticación)
 router.post('/',
-  authMiddleware,
+  adminAuthMiddleware,
   [
     body('price').isFloat({ min: 0 }).withMessage('El precio debe ser mayor a 0'),
     body('singleDishPrice').optional().isFloat({ min: 0 }).withMessage('El precio del plato único debe ser mayor a 0'),
@@ -128,7 +128,7 @@ router.post('/',
 )
 
 // PUT - Actualizar menú del día (requiere autenticación)
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', adminAuthMiddleware, async (req, res) => {
   try {
     const { price, singleDishPrice, completeSingleDishPrice, includes, starters, mains, desserts, active } = req.body
 
@@ -156,7 +156,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 })
 
 // DELETE - Eliminar menú (requiere autenticación)
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', adminAuthMiddleware, async (req, res) => {
   try {
     await prisma.dailyMenu.delete({
       where: { id: req.params.id }

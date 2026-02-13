@@ -1,12 +1,11 @@
 import express from 'express'
 import { body, validationResult } from 'express-validator'
 import prisma from '../config/database.js'
-import { authMiddleware } from '../middleware/auth.js'
+import { adminAuthMiddleware } from '../middleware/adminAuth.js'
 import { upload } from '../middleware/upload.js'
 
-const router = express.Router()
+const router = express.Router();
 
-// GET - Obtener todos los platos (público)
 router.get('/', async (req, res) => {
   try {
     const { category, available } = req.query
@@ -46,8 +45,7 @@ router.get('/:id', async (req, res) => {
 })
 
 // POST - Crear nuevo plato (requiere autenticación)
-router.post('/',
-  authMiddleware,
+  adminAuthMiddleware,
   (req, res, next) => {
     // Si es JSON, saltamos multer
     if (req.headers['content-type']?.includes('application/json')) {
@@ -110,50 +108,45 @@ router.post('/',
       res.status(500).json({ error: 'Error al crear plato' })
     }
   }
-)
 
 // PUT - Actualizar plato (requiere autenticación)
-router.put('/:id',
-  authMiddleware,
-  upload.single('image'),
-  async (req, res) => {
-    try {
-      const { name, description, price, category, available } = req.body
-      let image = undefined
-      
-      // Si hay un archivo subido, usar la ruta local
-      if (req.file) {
-        image = `/uploads/${req.file.filename}`
-      }
-      // Si viene una URL externa en el body, usarla directamente
-      else if (req.body.image && req.body.image.startsWith('http')) {
-        image = req.body.image
-      }
+router.put('/:id', adminAuthMiddleware, upload.single('image'), async (req, res) => {
+  try {
+    const { name, description, price, category, available } = req.body;
+    let image = undefined;
 
-      const updateData = {
-        ...(name && { name }),
-        ...(description && { description }),
-        ...(price && { price: parseFloat(price) }),
-        ...(category && { category }),
-        ...(available !== undefined && { available: available === 'true' }),
-        ...(image !== undefined && { image })
-      }
-
-      const dish = await prisma.dish.update({
-        where: { id: req.params.id },
-        data: updateData
-      })
-
-      res.json(dish)
-    } catch (error) {
-      console.error('Error al actualizar plato:', error)
-      res.status(500).json({ error: 'Error al actualizar plato' })
+    // Si hay un archivo subido, usar la ruta local
+    if (req.file) {
+      image = `/uploads/${req.file.filename}`;
     }
+    // Si viene una URL externa en el body, usarla directamente
+    else if (req.body.image && req.body.image.startsWith('http')) {
+      image = req.body.image;
+    }
+
+    const updateData = {
+      ...(name && { name }),
+      ...(description && { description }),
+      ...(price && { price: parseFloat(price) }),
+      ...(category && { category }),
+      ...(available !== undefined && { available: available === 'true' }),
+      ...(image !== undefined && { image })
+    };
+
+    const dish = await prisma.dish.update({
+      where: { id: req.params.id },
+      data: updateData
+    });
+
+    res.json(dish);
+  } catch (error) {
+    console.error('Error al actualizar plato:', error);
+    res.status(500).json({ error: 'Error al actualizar plato' });
   }
-)
+});
 
 // DELETE - Eliminar plato (requiere autenticación)
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', adminAuthMiddleware, async (req, res) => {
   try {
     await prisma.dish.delete({
       where: { id: req.params.id }

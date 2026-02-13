@@ -34,7 +34,7 @@ const Account = () => {
   const [profileAvatarPreview, setProfileAvatarPreview] = useState(null)
 
   useEffect(() => {
-    const token = localStorage.getItem('userToken')
+    const token = localStorage.getItem('token')
     if (token) {
       fetchProfile()
     } else {
@@ -55,7 +55,7 @@ const Account = () => {
       })
       setIsAuthenticated(true)
     } catch (error) {
-      localStorage.removeItem('userToken')
+      localStorage.removeItem('token')
       setIsAuthenticated(false)
     } finally {
       setLoading(false)
@@ -67,7 +67,7 @@ const Account = () => {
     setSubmitting(true)
     try {
       const response = await userAuthAPI.login(loginData)
-      localStorage.setItem('userToken', response.data.token)
+      localStorage.setItem('token', response.data.token)
       setProfile(response.data.user)
       setProfileData({
         name: response.data.user.name || '',
@@ -99,7 +99,7 @@ const Account = () => {
       }
 
       const response = await userAuthAPI.register(payload)
-      localStorage.setItem('userToken', response.data.token)
+      localStorage.setItem('token', response.data.token)
       setProfile(response.data.user)
       setProfileData({
         name: response.data.user.name || '',
@@ -154,7 +154,7 @@ const Account = () => {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('userToken')
+    localStorage.removeItem('token')
     setIsAuthenticated(false)
     setProfile(null)
     toast.info('Sesión cerrada correctamente')
@@ -183,7 +183,7 @@ const Account = () => {
     if (!result.isConfirmed) return;
     try {
       await userProfileAPI.deleteMe();
-      localStorage.removeItem('userToken');
+      localStorage.removeItem('token');
       setIsAuthenticated(false);
       setProfile(null);
       toast.success('Cuenta eliminada correctamente');

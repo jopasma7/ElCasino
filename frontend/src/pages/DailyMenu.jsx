@@ -17,8 +17,13 @@ const DailyMenu = () => {
       setLoading(true)
       setError(null)
       const response = await dailyMenuAPI.getToday()
-      const menu = response.data
-      
+      // Si la respuesta es { menu: null }
+      if (response.data.menu === null) {
+        setDailyMenu(null)
+        return
+      }
+      // Si la respuesta es el menú directamente (compatibilidad)
+      const menu = response.data.menu || response.data
       // Formatear la fecha
       menu.formattedDate = new Date(menu.date).toLocaleDateString('es-ES', {
         weekday: 'long',
@@ -26,7 +31,6 @@ const DailyMenu = () => {
         month: 'long',
         day: 'numeric'
       })
-      
       setDailyMenu(menu)
     } catch (error) {
       // 404 significa que no hay menú del día, no es un error técnico

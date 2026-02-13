@@ -1,7 +1,10 @@
 import { MapPin, Phone, Mail, Clock, Facebook, Instagram, ChefHat, Heart } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 const Footer = () => {
+  const location = useLocation();
+  const isTPV = location.pathname === '/tpv';
+
   return (
     <footer className="bg-neutral-900 text-neutral-300">
       {/* Main Footer */}
@@ -118,24 +121,26 @@ const Footer = () => {
           </div>
 
           {/* CTA */}
-          <div>
-            <h4 className="text-lg font-semibold text-white mb-6">¡Haz tu Pedido!</h4>
-            <p className="text-sm text-neutral-400 mb-6">
-              Haz tu pedido online y disfruta de nuestros platos cuando y donde quieras.
-            </p>
-            <Link
-              to="/pedido"
-              className="block bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-4 rounded-lg text-center transition-all transform hover:scale-105 mb-6"
-            >
-              Pedir Ahora
-            </Link>
-            <Link
-              to="/admin"
-              className="text-xs text-neutral-500 hover:text-neutral-400 transition-colors"
-            >
-              Acceso de Administración
-            </Link>
-          </div>
+          {!isTPV && (
+            <div>
+              <h4 className="text-lg font-semibold text-white mb-6">¡Haz tu Pedido!</h4>
+              <p className="text-sm text-neutral-400 mb-6">
+                Haz tu pedido online y disfruta de nuestros platos cuando y donde quieras.
+              </p>
+              <Link
+                to="/pedido"
+                className="block bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-4 rounded-lg text-center transition-all transform hover:scale-105 mb-6"
+              >
+                Pedir Ahora
+              </Link>
+              <Link
+                to="/admin"
+                className="text-xs text-neutral-500 hover:text-neutral-400 transition-colors"
+              >
+                Acceso de Administración
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Divider */}

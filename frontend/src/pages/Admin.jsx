@@ -31,93 +31,34 @@ function DishImage({ src, name }) {
 import { Lock, Plus, Edit, Trash2, LogOut, ClipboardList, Eye, EyeOff, X } from 'lucide-react'
 
 const MySwal = withReactContent(Swal)
-import { authAPI, dishesAPI, galleryAPI, dailyMenuAPI, dailyMenuOptionsAPI, ordersAPI } from '../services/api'
+import { dishesAPI, galleryAPI, dailyMenuAPI, dailyMenuOptionsAPI, ordersAPI } from '../services/api'
+import { useAdmin } from '../hooks/useAdmin'
 
 const Admin = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [password, setPassword] = useState('')
   const [activeTab, setActiveTab] = useState('dishes')
-  const [loading, setLoading] = useState(false)
+  const { isAdmin, loading: adminLoading } = useAdmin()
 
-  useEffect(() => {
-    const token = localStorage.getItem('adminToken')
-    if (token) {
-      verifyToken()
-    }
-  }, [])
-
-  const verifyToken = async () => {
-    try {
-      await authAPI.verify()
-      setIsAuthenticated(true)
-    } catch (error) {
-      localStorage.removeItem('adminToken')
-      setIsAuthenticated(false)
-    }
+  if (adminLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-neutral-50 py-12 text-neutral-500">Cargando...</div>
   }
-
-  const handleLogin = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      const response = await authAPI.login(password)
-      localStorage.setItem('adminToken', response.data.token)
-      setIsAuthenticated(true)
-      setPassword('')
-    } catch (error) {
-      toast.error('Contraseña incorrecta')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleLogout = () => {
-    localStorage.removeItem('adminToken')
-    setIsAuthenticated(false)
-    setActiveTab('dishes')
-  }
-
-  if (!isAuthenticated) {
+  if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-neutral-50 py-12">
         <div className="container mx-auto px-4 max-w-md">
-          <div className="bg-white rounded-xl shadow-md p-8">
-            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Lock className="w-8 h-8 text-primary-600" />
-            </div>
-            <h1 className="text-2xl font-bold text-center mb-6">Panel de Administración</h1>
-            
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Contraseña
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input-field"
-                  placeholder="Introduce la contraseña (admin123)"
-                  required
-                />
-              </div>
-              <button 
-                type="submit" 
-                className="w-full btn-primary"
-                disabled={loading}
-              >
-                {loading ? 'Verificando...' : 'Acceder'}
-              </button>
-            </form>
-            
-            <p className="text-sm text-neutral-500 mt-4 text-center">
-              Solo personal autorizado
-            </p>
+          <div className="bg-white rounded-xl shadow-md p-8 text-center">
+            <Lock className="w-8 h-8 text-primary-600 mx-auto mb-6" />
+            <h1 className="text-2xl font-bold mb-6">Acceso restringido</h1>
+            <p className="text-neutral-500">Solo personal administrador autorizado</p>
           </div>
         </div>
       </div>
     )
   }
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.reload();
+  };
 
   return (
     <div className="py-12 bg-neutral-50 min-h-screen">
@@ -763,7 +704,7 @@ const GalleryManager = () => {
 const DailyMenuManager = () => {
   const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
-    price: '11.50',
+    price: '9.50',
     completeSingleDishPrice: '8.50',
     starters: '',
     mains: '',
@@ -785,13 +726,15 @@ const DailyMenuManager = () => {
   const fetchMenus = async () => {
     try {
       const response = await dailyMenuAPI.getToday()
-      if (response.data) {
+      // Soportar respuesta { menu: null } o { ...menu }
+      const menu = response.data.menu === undefined ? response.data : response.data.menu;
+      if (menu) {
         setFormData({
-          price: response.data.price.toString(),
-          completeSingleDishPrice: response.data.completeSingleDishPrice?.toString() || '8.50',
-          starters: response.data.starters.join('\n'),
-          mains: response.data.mains.join('\n'),
-          desserts: response.data.desserts.join('\n')
+          price: menu.price?.toString() || '9.50',
+          completeSingleDishPrice: menu.completeSingleDishPrice?.toString() || '8.50',
+          starters: Array.isArray(menu.starters) ? menu.starters.join('\n') : '',
+          mains: Array.isArray(menu.mains) ? menu.mains.join('\n') : '',
+          desserts: Array.isArray(menu.desserts) ? menu.desserts.join('\n') : ''
         })
       }
     } catch (error) {
@@ -883,6 +826,7 @@ const DailyMenuManager = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     
     const menuData = {
       price: parseFloat(formData.price),
@@ -931,8 +875,8 @@ const DailyMenuManager = () => {
         await dailyMenuAPI.delete(response.data.id);
         toast.success('Menú eliminado correctamente');
         setFormData({
-          price: '',
-          completeSingleDishPrice: '',
+          price: '9.50',
+          completeSingleDishPrice: '8.50',
           starters: '',
           mains: '',
           desserts: ''

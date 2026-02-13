@@ -1,13 +1,13 @@
 import express from 'express'
 import { body, validationResult } from 'express-validator'
 import prisma from '../config/database.js'
-import { authMiddleware } from '../middleware/auth.js'
+import { adminAuthMiddleware } from '../middleware/adminAuth.js'
 import { optionalUserAuthMiddleware } from '../middleware/userAuth.js'
 
 const router = express.Router()
 
 // GET - Obtener todos los pedidos (requiere autenticación)
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', adminAuthMiddleware, async (req, res) => {
   try {
     const { status, date } = req.query
     
@@ -54,7 +54,7 @@ router.get('/', authMiddleware, async (req, res) => {
 })
 
 // GET - Obtener un pedido por ID (requiere autenticación)
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id', adminAuthMiddleware, async (req, res) => {
   try {
     const order = await prisma.order.findUnique({
       where: { id: req.params.id },
@@ -198,7 +198,7 @@ router.post('/',
 )
 
 // PUT - Actualizar estado del pedido (requiere autenticación)
-router.put('/:id/status', authMiddleware, async (req, res) => {
+router.put('/:id/status', adminAuthMiddleware, async (req, res) => {
   try {
     const { status } = req.body
 
@@ -226,7 +226,7 @@ router.put('/:id/status', authMiddleware, async (req, res) => {
 })
 
 // DELETE - Cancelar pedido (requiere autenticación)
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', adminAuthMiddleware, async (req, res) => {
   try {
     await prisma.order.update({
       where: { id: req.params.id },
