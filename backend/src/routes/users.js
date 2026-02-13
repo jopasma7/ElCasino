@@ -5,6 +5,7 @@ import { body, validationResult } from 'express-validator'
 import prisma from '../config/database.js'
 import { upload } from '../middleware/upload.js'
 import { userAuthMiddleware } from '../middleware/userAuth.js'
+import { adminAuthMiddleware } from '../middleware/adminAuth.js'
 
 const router = express.Router()
 
@@ -222,5 +223,41 @@ router.put('/me',
     }
   }
 )
+
+// Cambiar rol de usuario (solo admin)
+router.put('/:id/role', adminAuthMiddleware, async (req, res) => {
+  try {
+    const { role } = req.body
+    if (!['Usuario', 'Administrador'].includes(role)) {
+      return res.status(400).json({ error: 'Rol inválido' })
+    }
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { role },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        avatar: true
+      }
+    })
+    res.json(user)
+  } catch (error) {
+    console.error('Error al cambiar rol:', error)
+    res.status(500).json({ error: 'Error al cambiar rol' })
+  }
+})
+
+// Eliminar usuario por id (solo admin)
+router.delete('/:id', adminAuthMiddleware, async (req, res) => {
+  try {
+    await prisma.user.delete({ where: { id: req.params.id } })
+    res.json({ message: 'Usuario eliminado correctamente' })
+  } catch (error) {
+    console.error('Error al eliminar usuario:', error)
+    res.status(500).json({ error: 'Error al eliminar usuario' })
+  }
+})
 
 export default router

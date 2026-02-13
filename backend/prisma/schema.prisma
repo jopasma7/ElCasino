@@ -55,6 +55,12 @@ model GalleryImage {
   @@map("gallery_images")
 }
 
+// Roles de usuario
+enum Role {
+  Usuario
+  Administrador
+}
+
 // Usuarios registrados
 model User {
   id           String   @id @default(uuid())
@@ -63,6 +69,7 @@ model User {
   email        String   @unique
   passwordHash String
   avatar       String?
+  role         Role     @default(Usuario)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

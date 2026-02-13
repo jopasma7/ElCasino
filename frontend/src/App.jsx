@@ -9,6 +9,7 @@ import Order from './pages/Order'
 import Contact from './pages/Contact'
 import Admin from './pages/Admin'
 import Account from './pages/Account'
+import Members from './pages/Members'
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/contacto" element={<Contact />} />
             <Route path="/cuenta" element={<Account />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/miembros" element={<Members />} />
           </Routes>
         </main>
         <Footer />

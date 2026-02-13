@@ -63,6 +63,12 @@ export const userProfileAPI = {
   deleteMe: () => userApi.delete('/users/me')
 }
 
+export const usersAPI = {
+  getAll: () => adminApi.get('/users'),
+  changeRole: (id, role) => adminApi.put(`/users/${id}/role`, { role }),
+  delete: (id) => adminApi.delete(`/users/${id}`)
+}
+
 // Dishes API
 export const dishesAPI = {
   getAll: (params) => publicApi.get('/dishes', { params }),

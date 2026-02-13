@@ -14,6 +14,7 @@ const Navbar = () => {
     { path: '/menu', label: 'Carta' },
     { path: '/menu-del-dia', label: 'Menú del Día' },
     { path: '/galeria', label: 'Galería' },
+    { path: '/miembros', label: 'Miembros' },
     { path: '/contacto', label: 'Contacto' },
     { path: '/cuenta', label: 'Cuenta' }
   ]
