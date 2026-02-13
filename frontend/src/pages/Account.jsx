@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import { toast } from 'react-toastify'
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
 import { userAuthAPI, userProfileAPI } from '../services/api'
 
 const Account = () => {
@@ -66,9 +69,10 @@ const Account = () => {
         avatar: null
       })
       setIsAuthenticated(true)
+      toast.success('Inicio de sesión exitoso')
       window.dispatchEvent(new Event('user-auth-changed'))
     } catch (error) {
-      alert('Email o contraseña incorrectos')
+      toast.error('Email o contraseña incorrectos')
     } finally {
       setSubmitting(false)
     }
@@ -97,9 +101,12 @@ const Account = () => {
         avatar: null
       })
       setIsAuthenticated(true)
+      toast.success('Registro exitoso')
       window.dispatchEvent(new Event('user-auth-changed'))
     } catch (error) {
-      alert('Error al registrar usuario')
+      // Intenta mostrar el mensaje del backend si existe
+      const msg = error?.response?.data?.errors?.[0]?.msg || error?.response?.data?.error || 'Error al registrar usuario'
+      toast.error(msg)
     } finally {
       setSubmitting(false)
     }
@@ -107,6 +114,11 @@ const Account = () => {
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault()
+    // Validar que el teléfono solo contenga números
+    if (!/^[0-9]{7,15}$/.test(profileData.phone)) {
+      toast.error('Introduce un teléfono válido (solo números, sin espacios)')
+      return
+    }
     setSubmitting(true)
     try {
       const payload = new FormData()
@@ -125,10 +137,10 @@ const Account = () => {
         email: response.data.email || '',
         avatar: null
       })
-      alert('Perfil actualizado')
+      toast.success('Perfil actualizado')
       window.dispatchEvent(new Event('user-auth-changed'))
     } catch (error) {
-      alert('Error al actualizar perfil')
+      toast.error('Error al actualizar perfil')
     } finally {
       setSubmitting(false)
     }
@@ -138,13 +150,47 @@ const Account = () => {
     localStorage.removeItem('userToken')
     setIsAuthenticated(false)
     setProfile(null)
+    toast.info('Sesión cerrada correctamente')
     window.dispatchEvent(new Event('user-auth-changed'))
+  }
+
+  const MySwal = withReactContent(Swal)
+  const handleDeleteAccount = async () => {
+    const result = await MySwal.fire({
+      title: '<span style="color:#a66a06;font-weight:bold">¿Eliminar cuenta?</span>',
+      html: '<div style="color:#444">¿Seguro que quieres eliminar tu cuenta? <br><b>Esta acción no se puede deshacer.</b></div>',
+      icon: 'warning',
+      showCancelButton: true,
+      focusCancel: true,
+      confirmButtonColor: '#a66a06',
+      cancelButtonColor: '#d33',
+      confirmButtonText: '<b>Eliminar</b>',
+      cancelButtonText: 'Cancelar',
+      customClass: {
+        popup: 'swal2-rounded swal2-shadow',
+        confirmButton: 'swal2-confirm-custom',
+        cancelButton: 'swal2-cancel-custom'
+      },
+      buttonsStyling: false
+    })
+    if (!result.isConfirmed) return;
+    try {
+      await userProfileAPI.deleteMe();
+      localStorage.removeItem('userToken');
+      setIsAuthenticated(false);
+      setProfile(null);
+      toast.success('Cuenta eliminada correctamente');
+      window.dispatchEvent(new Event('user-auth-changed'));
+    } catch (error) {
+      const msg = error?.response?.data?.error || 'Error al eliminar la cuenta';
+      toast.error(msg);
+    }
   }
 
   const avatarUrl = profile?.avatar
     ? (profile.avatar.startsWith('http')
       ? profile.avatar
-      : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000'}${profile.avatar}`)
+      : `https://elcasino-backend.zeabur.app${profile.avatar}`)
     : null
 
   const currentAvatar = profileAvatarPreview || avatarUrl
@@ -218,12 +264,18 @@ const Account = () => {
                   <p className="text-neutral-200">Estado: Miembro activo</p>
                   <p className="text-neutral-400">Beneficios: Reservas rapidas</p>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="mt-6 w-full px-4 py-2 rounded-lg bg-white/15 hover:bg-white/25 transition-colors"
-                >
-                  Cerrar sesión
-                </button>
+                 <button
+                   onClick={handleLogout}
+                   className="mt-6 w-full px-4 py-2 rounded-lg bg-white/15 hover:bg-white/25 transition-colors"
+                 >
+                   Cerrar sesión
+                 </button>
+                 <button
+                   onClick={handleDeleteAccount}
+                   className="mt-3 w-full px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors"
+                 >
+                   Eliminar cuenta
+                 </button>
               </div>
             </div>
 

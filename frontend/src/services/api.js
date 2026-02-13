@@ -59,7 +59,8 @@ export const userProfileAPI = {
   getMe: () => userApi.get('/users/me'),
   updateMe: (formData) => userApi.put('/users/me', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
-  })
+  }),
+  deleteMe: () => userApi.delete('/users/me')
 }
 
 // Dishes API

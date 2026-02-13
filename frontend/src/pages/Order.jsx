@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
 import { ShoppingCart, Plus, Minus, Trash2, CheckCircle2, Utensils, Clock } from 'lucide-react'
 import { dailyMenuAPI, ordersAPI, userProfileAPI, dishesAPI } from '../services/api'
 
@@ -81,7 +82,7 @@ const Order = () => {
 
   const addCompleteMenuToCart = () => {
     if (!menuSelections.starter || !menuSelections.main || !menuSelections.dessert) {
-      alert('Por favor, selecciona un primero, un segundo y un postre')
+      toast.error('Por favor, selecciona un primero, un segundo y un postre')
       return
     }
     // Buscar los dishId por nombre normalizado
@@ -89,7 +90,7 @@ const Order = () => {
     const mainDish = dishes.find(d => normalize(d.name) === normalize(menuSelections.main))
     const dessertDish = dishes.find(d => normalize(d.name) === normalize(menuSelections.dessert))
     if (!starterDish || !mainDish || !dessertDish) {
-      alert('No se pudo encontrar el plato seleccionado. Intenta recargar la página.')
+      toast.error('No se pudo encontrar el plato seleccionado. Intenta recargar la página.')
       console.log('Platos cargados:', dishes.map(d => d.name));
       console.log('Seleccionados:', menuSelections);
       return
@@ -116,13 +117,13 @@ const Order = () => {
   
   const addCompleteSingleToCart = () => {
     if (!completeSingleSelection.dish || !completeSingleSelection.dessert) {
-      alert('Por favor, selecciona un plato y un postre')
+      toast.error('Por favor, selecciona un plato y un postre')
       return
     }
     const dishObj = dishes.find(d => normalize(d.name) === normalize(completeSingleSelection.dish))
     const dessertObj = dishes.find(d => normalize(d.name) === normalize(completeSingleSelection.dessert))
     if (!dishObj || !dessertObj) {
-      alert('No se pudo encontrar el plato seleccionado. Intenta recargar la página.')
+      toast.error('No se pudo encontrar el plato seleccionado. Intenta recargar la página.')
       console.log('Platos cargados:', dishes.map(d => d.name));
       console.log('Seleccionados:', completeSingleSelection);
       return
@@ -168,12 +169,12 @@ const Order = () => {
     e.preventDefault()
     
     if (cart.length === 0) {
-      alert('Por favor, añade el menú del día a tu pedido')
+      toast.error('Por favor, añade el menú del día a tu pedido')
       return
     }
 
     if (!customerInfo.name || !customerInfo.phone) {
-      alert('Por favor, completa tu información de contacto')
+      toast.error('Por favor, completa tu información de contacto')
       return
     }
 
@@ -208,7 +209,7 @@ const Order = () => {
       setOrderPlaced(true)
     } catch (error) {
       console.error('Error al realizar pedido:', error)
-      alert('Error al realizar el pedido. Inténtalo de nuevo.')
+      toast.error('Error al realizar el pedido. Inténtalo de nuevo.')
     } finally {
       setSubmitting(false)
     }

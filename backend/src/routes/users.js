@@ -13,7 +13,9 @@ router.post('/register',
   upload.single('avatar'),
   [
     body('name').notEmpty().withMessage('El nombre es requerido'),
-    body('phone').notEmpty().withMessage('El teléfono es requerido'),
+    body('phone')
+      .notEmpty().withMessage('El teléfono es requerido')
+      .matches(/^[0-9]{7,15}$/).withMessage('El teléfono debe contener solo números (7-15 dígitos)'),
     body('password').isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres'),
     body('email').isEmail().withMessage('Email inválido')
   ],
@@ -145,6 +147,18 @@ router.get('/me', userAuthMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error al obtener perfil:', error)
     res.status(500).json({ error: 'Error al obtener perfil' })
+  }
+})
+
+// Eliminar cuenta del usuario autenticado
+router.delete('/me', userAuthMiddleware, async (req, res) => {
+  try {
+    // Elimina el usuario de la base de datos
+    await prisma.user.delete({ where: { id: req.user.userId } })
+    res.json({ message: 'Cuenta eliminada correctamente' })
+  } catch (error) {
+    console.error('Error al eliminar cuenta:', error)
+    res.status(500).json({ error: 'Error al eliminar la cuenta' })
   }
 })
 

@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
+import '../sweetalert2-custom.css'
 
 // Imagen de plato con fallback si falla
 function DishImage({ src, name }) {
@@ -25,6 +29,8 @@ function DishImage({ src, name }) {
   );
 }
 import { Lock, Plus, Edit, Trash2, LogOut, ClipboardList, Eye, EyeOff, X } from 'lucide-react'
+
+const MySwal = withReactContent(Swal)
 import { authAPI, dishesAPI, galleryAPI, dailyMenuAPI, dailyMenuOptionsAPI, ordersAPI } from '../services/api'
 
 const Admin = () => {
@@ -59,7 +65,7 @@ const Admin = () => {
       setIsAuthenticated(true)
       setPassword('')
     } catch (error) {
-      alert('Contraseña incorrecta')
+      toast.error('Contraseña incorrecta')
     } finally {
       setLoading(false)
     }
@@ -235,14 +241,32 @@ const DishesManager = () => {
     }
   }
 
+  const MySwal = withReactContent(Swal)
   const handleDelete = async (id) => {
-    if (!confirm('¿Estás seguro de eliminar este plato?')) return
-    
+    const result = await MySwal.fire({
+      title: <span style={{color:'#a66a06',fontWeight:'bold'}}>¿Eliminar plato?</span>,
+      html: '<div style="color:#444">¿Seguro que quieres eliminar este plato? <br><b>Esta acción no se puede deshacer.</b></div>',
+      icon: 'warning',
+      showCancelButton: true,
+      focusCancel: true,
+      confirmButtonColor: '#a66a06',
+      cancelButtonColor: '#d33',
+      confirmButtonText: '<b>Eliminar</b>',
+      cancelButtonText: 'Cancelar',
+      customClass: {
+        popup: 'swal2-rounded swal2-shadow',
+        confirmButton: 'swal2-confirm-custom',
+        cancelButton: 'swal2-cancel-custom'
+      },
+      buttonsStyling: false
+    })
+    if (!result.isConfirmed) return
     try {
       await dishesAPI.delete(id)
       setDishes(dishes.filter(d => d.id !== id))
+      toast.success('Plato eliminado correctamente')
     } catch (error) {
-      alert('Error al eliminar plato')
+      toast.error('Error al eliminar plato')
     }
   }
 
@@ -281,11 +305,12 @@ const DishesManager = () => {
       if (editingId) {
         const response = await dishesAPI.update(editingId, payload)
         setDishes(dishes.map(d => d.id === editingId ? response.data : d))
+        toast.success('Plato actualizado correctamente')
       } else {
         const response = await dishesAPI.create(payload)
         setDishes([response.data, ...dishes])
+        toast.success('Plato creado correctamente')
       }
-      
       setFormData({
         name: '',
         description: '',
@@ -297,7 +322,7 @@ const DishesManager = () => {
       setEditingId(null)
       setShowForm(false)
     } catch (error) {
-      alert(editingId ? 'Error al actualizar plato' : 'Error al crear plato')
+      toast.error(editingId ? 'Error al actualizar plato' : 'Error al crear plato')
     } finally {
       setSubmitting(false)
     }
@@ -310,7 +335,7 @@ const DishesManager = () => {
       const response = await dishesAPI.update(dish.id, payload)
       setDishes(dishes.map(d => d.id === dish.id ? response.data : d))
     } catch (error) {
-      alert('Error al actualizar disponibilidad')
+      toast.error('Error al actualizar disponibilidad')
     }
   }
 
@@ -558,13 +583,30 @@ const GalleryManager = () => {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('¿Estás seguro de eliminar esta imagen?')) return
-    
+    const result = await MySwal.fire({
+      title: <span style={{color:'#a66a06',fontWeight:'bold'}}>¿Eliminar imagen?</span>,
+      html: '<div style="color:#444">¿Seguro que quieres eliminar esta imagen? <br><b>Esta acción no se puede deshacer.</b></div>',
+      icon: 'warning',
+      showCancelButton: true,
+      focusCancel: true,
+      confirmButtonColor: '#a66a06',
+      cancelButtonColor: '#d33',
+      confirmButtonText: '<b>Eliminar</b>',
+      cancelButtonText: 'Cancelar',
+      customClass: {
+        popup: 'swal2-rounded swal2-shadow',
+        confirmButton: 'swal2-confirm-custom',
+        cancelButton: 'swal2-cancel-custom'
+      },
+      buttonsStyling: false
+    })
+    if (!result.isConfirmed) return
     try {
       await galleryAPI.delete(id)
       setImages(images.filter(i => i.id !== id))
+      toast.success('Imagen eliminada correctamente')
     } catch (error) {
-      alert('Error al eliminar imagen')
+      toast.error('Error al eliminar imagen')
     }
   }
 
@@ -589,7 +631,7 @@ const GalleryManager = () => {
       setFormData({ title: '', category: '', visible: true, image: null })
       setShowForm(false)
     } catch (error) {
-      alert('Error al subir imagen')
+      toast.error('Error al subir imagen')
     } finally {
       setSubmitting(false)
     }
@@ -602,7 +644,7 @@ const GalleryManager = () => {
       const response = await galleryAPI.update(image.id, payload)
       setImages(images.map(i => i.id === image.id ? response.data : i))
     } catch (error) {
-      alert('Error al actualizar visibilidad')
+      toast.error('Error al actualizar visibilidad')
     }
   }
   return (
@@ -784,18 +826,37 @@ const DailyMenuManager = () => {
       setMenuOptions([response.data, ...menuOptions])
       setOptionForm({ name: '', type: optionForm.type })
     } catch (error) {
-      alert('Error al crear opción')
+      toast.error('Error al crear opción')
     } finally {
       setOptionSubmitting(false)
     }
   }
 
   const handleRemoveOption = async (id) => {
+    const result = await MySwal.fire({
+      title: '<span style="color:#a66a06;font-weight:bold">¿Eliminar opción?</span>',
+      html: '<div style="color:#444">¿Seguro que quieres eliminar esta opción rápida? <br><b>Esta acción no se puede deshacer.</b></div>',
+      icon: 'warning',
+      showCancelButton: true,
+      focusCancel: true,
+      confirmButtonColor: '#a66a06',
+      cancelButtonColor: '#d33',
+      confirmButtonText: '<b>Eliminar</b>',
+      cancelButtonText: 'Cancelar',
+      customClass: {
+        popup: 'swal2-rounded swal2-shadow',
+        confirmButton: 'swal2-confirm-custom',
+        cancelButton: 'swal2-cancel-custom'
+      },
+      buttonsStyling: false
+    })
+    if (!result.isConfirmed) return;
     try {
       await dailyMenuOptionsAPI.remove(id)
       setMenuOptions(menuOptions.filter(option => option.id !== id))
+      toast.success('Opción eliminada correctamente')
     } catch (error) {
-      alert('Error al eliminar opción')
+      toast.error('Error al eliminar opción')
     }
   }
 
@@ -834,9 +895,9 @@ const DailyMenuManager = () => {
 
     try {
       await dailyMenuAPI.create(menuData)
-      alert('Menú actualizado correctamente')
+      toast.success('Menú actualizado correctamente')
     } catch (error) {
-      alert('Error al actualizar menú')
+      toast.error('Error al actualizar menú')
     }
   }
 
@@ -845,13 +906,30 @@ const DailyMenuManager = () => {
   }
   // Eliminar menú del día
   const handleDeleteMenu = async () => {
-    if (!window.confirm('¿Seguro que quieres eliminar el menú del día? Esta acción no se puede deshacer.')) return;
+    const result = await MySwal.fire({
+      title: '<span style="color:#a66a06;font-weight:bold">¿Eliminar menú del día?</span>',
+      html: '<div style="color:#444">¿Seguro que quieres eliminar el menú del día? <br><b>Esta acción no se puede deshacer.</b></div>',
+      icon: 'warning',
+      showCancelButton: true,
+      focusCancel: true,
+      confirmButtonColor: '#a66a06',
+      cancelButtonColor: '#d33',
+      confirmButtonText: '<b>Eliminar</b>',
+      cancelButtonText: 'Cancelar',
+      customClass: {
+        popup: 'swal2-rounded swal2-shadow',
+        confirmButton: 'swal2-confirm-custom',
+        cancelButton: 'swal2-cancel-custom'
+      },
+      buttonsStyling: false
+    })
+    if (!result.isConfirmed) return;
     try {
       // Obtener el menú actual (solo si existe)
       const response = await dailyMenuAPI.getToday();
       if (response.data && response.data.id) {
         await dailyMenuAPI.delete(response.data.id);
-        alert('Menú eliminado correctamente');
+        toast.success('Menú eliminado correctamente');
         setFormData({
           price: '',
           completeSingleDishPrice: '',
@@ -860,10 +938,10 @@ const DailyMenuManager = () => {
           desserts: ''
         });
       } else {
-        alert('No hay menú del día para eliminar');
+        toast.info('No hay menú del día para eliminar');
       }
     } catch (error) {
-      alert('Error al eliminar el menú');
+      toast.error('Error al eliminar el menú');
     }
   };
 
@@ -1095,7 +1173,7 @@ const OrdersManager = () => {
       const response = await ordersAPI.updateStatus(orderId, status)
       setOrders(orders.map(order => order.id === orderId ? response.data : order))
     } catch (error) {
-      alert('Error al actualizar estado')
+      toast.error('Error al actualizar estado')
     }
   }
 
@@ -1228,13 +1306,30 @@ const OrdersManager = () => {
                       <button
                         className="px-3 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors"
                         onClick={async () => {
-                          if (window.confirm('¿Seguro que quieres borrar este pedido?')) {
-                            try {
-                              await ordersAPI.cancel(order.id)
-                              setOrders(orders => orders.filter(o => o.id !== order.id))
-                            } catch (err) {
-                              alert('Error al borrar el pedido')
-                            }
+                          const result = await MySwal.fire({
+                            title: '<span style="color:#a66a06;font-weight:bold">¿Eliminar pedido?</span>',
+                            html: '<div style="color:#444">¿Seguro que quieres borrar este pedido? <br><b>Esta acción no se puede deshacer.</b></div>',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            focusCancel: true,
+                            confirmButtonColor: '#a66a06',
+                            cancelButtonColor: '#d33',
+                            confirmButtonText: '<b>Eliminar</b>',
+                            cancelButtonText: 'Cancelar',
+                            customClass: {
+                              popup: 'swal2-rounded swal2-shadow',
+                              confirmButton: 'swal2-confirm-custom',
+                              cancelButton: 'swal2-cancel-custom'
+                            },
+                            buttonsStyling: false
+                          });
+                          if (!result.isConfirmed) return;
+                          try {
+                            await ordersAPI.cancel(order.id);
+                            setOrders(orders => orders.filter(o => o.id !== order.id));
+                            toast.success('Pedido eliminado correctamente');
+                          } catch (err) {
+                            toast.error('Error al borrar el pedido');
                           }
                         }}
                       >

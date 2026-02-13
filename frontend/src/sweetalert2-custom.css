@@ -1,0 +1,29 @@
+.swal2-popup.swal2-rounded {
+  border-radius: 1.25rem !important;
+}
+.swal2-popup.swal2-shadow {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18) !important;
+}
+.swal2-confirm-custom {
+  background: #a66a06 !important;
+  color: #fff !important;
+  border-radius: 0.5rem !important;
+  font-weight: 600 !important;
+  padding: 0.75em 2.5em !important;
+  font-size: 1rem !important;
+  margin-right: 0.5em;
+}
+.swal2-cancel-custom {
+  background: #fff !important;
+  color: #a66a06 !important;
+  border: 2px solid #a66a06 !important;
+  border-radius: 0.5rem !important;
+  font-weight: 600 !important;
+  padding: 0.75em 2.5em !important;
+  font-size: 1rem !important;
+  transition: background 0.2s, color 0.2s;
+}
+.swal2-cancel-custom:hover, .swal2-cancel-custom:focus {
+  background: #a66a06 !important;
+  color: #fff !important;
+}

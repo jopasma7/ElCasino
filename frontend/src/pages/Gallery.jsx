@@ -76,8 +76,7 @@ const Gallery = () => {
                   <img
                     src={image.url.startsWith('http')
                       ? image.url
-                      : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000'}${image.url}`
-                    }
+                      : `https://elcasino-backend.zeabur.app${image.url}`}
                     alt={image.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     onError={(e) => {
@@ -122,8 +121,7 @@ const Gallery = () => {
                   <img
                     src={selectedImage.url.startsWith('http')
                       ? selectedImage.url
-                      : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000'}${selectedImage.url}`
-                    }
+                      : `https://elcasino-backend.zeabur.app${selectedImage.url}`}
                     alt={selectedImage.title}
                     className="w-full h-full object-contain"
                     onError={(e) => {

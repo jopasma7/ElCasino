@@ -103,8 +103,7 @@ const Menu = () => {
                   <img 
                     src={dish.image.startsWith('http') 
                       ? dish.image 
-                      : `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:4000'}${dish.image}`
-                    } 
+                      : `https://elcasino-backend.zeabur.app${dish.image}`}
                     alt={dish.name} 
                     className="w-full h-full object-cover" 
                     onError={(e) => {
