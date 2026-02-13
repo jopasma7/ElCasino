@@ -46,7 +46,7 @@ const Home = () => {
   return (
     <div className="bg-white">
       {/* Hero Section Mejorado */}
-      <section className="relative h-screen md:h-[600px] flex items-center overflow-hidden">
+      <section className="relative min-h-[70vh] md:h-[600px] flex items-center overflow-hidden">
         {/* Background Image con overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary-900 via-primary-800 to-primary-700">
           <div className="absolute inset-0 opacity-40" style={{
@@ -57,33 +57,33 @@ const Home = () => {
         {/* Contenido */}
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl">
-            <div className="mb-6 inline-block">
+            <div className="mb-4 sm:mb-6 inline-block">
               <span className="bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm font-semibold">
                 🍽️ Sabor local, calidad y cercanía
               </span>
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-display font-bold text-white mb-6 leading-tight">
+            <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-7xl font-display font-bold text-white mb-4 sm:mb-6 leading-tight">
               El Casino<br />Benilloba
             </h1>
             
-            <p className="text-xl md:text-2xl text-primary-50 mb-8 leading-relaxed max-w-2xl">
+            <p className="text-base xs:text-lg md:text-2xl text-primary-50 mb-6 sm:mb-8 leading-relaxed max-w-2xl">
               Bar restaurante tradicional en el corazón de Benilloba. 
               Donde cada comida es una experiencia única con sabor a casa.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/menu-del-dia" className="bg-white text-primary-700 hover:bg-primary-50 px-8 py-4 rounded-lg font-semibold inline-flex items-center justify-center gap-2 transition-all transform hover:scale-105">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <Link to="/menu-del-dia" className="bg-white text-primary-700 hover:bg-primary-50 px-5 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold inline-flex items-center justify-center gap-2 transition-all transform hover:scale-105 text-base sm:text-lg">
                 Ver Menú del Día
                 <ArrowRight className="w-5 h-5" />
               </Link>
-              <Link to="/pedido" className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-4 rounded-lg font-semibold inline-flex items-center justify-center transition-all transform hover:scale-105">
+              <Link to="/pedido" className="bg-primary-500 hover:bg-primary-600 text-white px-5 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold inline-flex items-center justify-center transition-all transform hover:scale-105 text-base sm:text-lg">
                 Hacer un Pedido
               </Link>
             </div>
 
             {/* Quick Info */}
-            <div className="mt-12 flex flex-col sm:flex-row gap-8 text-white">
+            <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row gap-6 sm:gap-8 text-white">
               <div className="flex items-center gap-3">
                 <Clock className="w-6 h-6 text-primary-300" />
                 <div>
@@ -112,23 +112,23 @@ const Home = () => {
       </section>
 
       {/* Sección de Características */}
-      <section className="py-24 bg-neutral-50">
+      <section className="py-12 md:py-24 bg-neutral-50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-display font-bold text-neutral-900 mb-4">
+          <div className="text-center mb-8 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-neutral-900 mb-4">
               ¿Por qué elegirnos?
             </h2>
             <div className="w-16 h-1 bg-primary-600 mx-auto"></div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all transform hover:scale-105">
+              <div key={index} className="bg-white p-5 sm:p-8 rounded-xl shadow-md hover:shadow-xl transition-all transform hover:scale-105">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 text-primary-600 rounded-full mb-4">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold mb-3 text-neutral-900">{feature.title}</h3>
-                <p className="text-neutral-600 leading-relaxed">{feature.description}</p>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-neutral-900">{feature.title}</h3>
+                <p className="text-neutral-600 leading-relaxed text-sm sm:text-base">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -136,12 +136,12 @@ const Home = () => {
       </section>
 
       {/* Sección "Sobre Nosotros" */}
-      <section className="py-24 bg-white">
+      <section className="py-12 md:py-24 bg-white">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
             {/* Imagen placeholder */}
             <div className="relative">
-              <div className="rounded-xl w-full h-96 md:h-full shadow-lg border border-primary-100 bg-neutral-200 flex items-center justify-center overflow-hidden">
+              <div className="rounded-xl w-full h-56 xs:h-72 sm:h-96 md:h-full shadow-lg border border-primary-100 bg-neutral-200 flex items-center justify-center overflow-hidden">
                 <img 
                   src="/restaurante.png"
                   alt="Restaurante El Casino Benilloba"
@@ -153,34 +153,34 @@ const Home = () => {
 
             {/* Contenido */}
             <div>
-              <h2 className="text-4xl font-display font-bold text-neutral-900 mb-6">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-neutral-900 mb-4 sm:mb-6">
                 Tradición y calidad en cada plato
               </h2>
-              <p className="text-lg text-neutral-600 mb-4 leading-relaxed">
+              <p className="text-base sm:text-lg text-neutral-600 mb-3 sm:mb-4 leading-relaxed">
                 El Casino Benilloba es mucho más que un restaurante. Es un lugar donde generaciones de familias han compartido comidas memorables, donde la tradición culinaria se mezcla con la calidez del trato personalizado.
               </p>
               {/* Párrafo eliminado por solicitud */}
               
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 mt-1">✓</div>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 mt-1">✓</div>
                   <div>
-                    <h3 className="font-semibold text-neutral-900">Productos locales</h3>
-                    <p className="text-neutral-600">Trabajamos con proveedores de confianza de la región</p>
+                    <h3 className="font-semibold text-neutral-900 text-base sm:text-lg">Productos locales</h3>
+                    <p className="text-neutral-600 text-sm sm:text-base">Trabajamos con proveedores de confianza de la región</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 mt-1">✓</div>
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 mt-1">✓</div>
                   <div>
-                    <h3 className="font-semibold text-neutral-900">Recetas tradicionales</h3>
-                    <p className="text-neutral-600">Elaboradas con técnicas transmitidas por generaciones</p>
+                    <h3 className="font-semibold text-neutral-900 text-base sm:text-lg">Recetas tradicionales</h3>
+                    <p className="text-neutral-600 text-sm sm:text-base">Elaboradas con técnicas transmitidas por generaciones</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 mt-1">✓</div>
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 mt-1">✓</div>
                   <div>
-                    <h3 className="font-semibold text-neutral-900">Atención personalizada</h3>
-                    <p className="text-neutral-600">Te tratamos como parte de nuestra familia</p>
+                    <h3 className="font-semibold text-neutral-900 text-base sm:text-lg">Atención personalizada</h3>
+                    <p className="text-neutral-600 text-sm sm:text-base">Te tratamos como parte de nuestra familia</p>
                   </div>
                 </div>
               </div>
@@ -190,25 +190,25 @@ const Home = () => {
       </section>
 
       {/* Testimonios */}
-      <section className="py-24 bg-neutral-50">
+      <section className="py-12 md:py-24 bg-neutral-50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-display font-bold text-neutral-900 mb-4">
+          <div className="text-center mb-8 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-neutral-900 mb-4">
               Lo que dicen nuestros clientes
             </h2>
             <div className="w-16 h-1 bg-primary-600 mx-auto"></div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
             {testimonials.map((testimonial, index) => (
-              <div key={index} className="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all">
+              <div key={index} className="bg-white p-5 sm:p-8 rounded-xl shadow-md hover:shadow-xl transition-all">
                 <div className="flex items-center gap-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
                     <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
-                <p className="text-neutral-600 mb-6 italic">"{testimonial.text}"</p>
-                <div className="flex items-center gap-3">
+                <p className="text-neutral-600 mb-4 sm:mb-6 italic text-sm sm:text-base">"{testimonial.text}"</p>
+                <div className="flex items-center gap-2 sm:gap-3">
                   <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
                     <Users className="w-6 h-6 text-primary-600" />
                   </div>
@@ -221,20 +221,20 @@ const Home = () => {
       </section>
 
       {/* CTA Final */}
-      <section className="py-24 bg-gradient-to-r from-primary-600 to-primary-800 text-white">
+      <section className="py-12 md:py-24 bg-gradient-to-r from-primary-600 to-primary-800 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-display font-bold mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold mb-4 sm:mb-6">
             ¿Listo para una experiencia culinaria memorable?
           </h2>
-          <p className="text-xl text-primary-50 mb-12 max-w-2xl mx-auto">
+          <p className="text-base sm:text-xl text-primary-50 mb-8 sm:mb-12 max-w-2xl mx-auto">
             Visítanos hoy o haz tu pedido online. Te esperamos con lo mejor de nuestra cocina.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/contacto" className="bg-white text-primary-700 hover:bg-primary-50 px-8 py-4 rounded-lg font-semibold inline-flex items-center justify-center gap-2 transition-all">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <Link to="/contacto" className="bg-white text-primary-700 hover:bg-primary-50 px-5 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold inline-flex items-center justify-center gap-2 transition-all text-base sm:text-lg">
               <MapPin className="w-5 h-5" />
               Cómo Llegar
             </Link>
-            <Link to="/menu" className="border-2 border-white text-white hover:bg-white hover:text-primary-700 px-8 py-4 rounded-lg font-semibold inline-flex items-center justify-center transition-all">
+            <Link to="/menu" className="border-2 border-white text-white hover:bg-white hover:text-primary-700 px-5 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold inline-flex items-center justify-center transition-all text-base sm:text-lg">
               <UtensilsCrossed className="w-5 h-5 mr-2" />
               Ver Carta Completa
             </Link>

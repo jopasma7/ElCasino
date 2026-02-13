@@ -248,13 +248,13 @@ const Order = () => {
   }
 
   return (
-  <div className="py-12 bg-neutral-50">
-    <div className="container mx-auto px-4">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-display font-bold text-neutral-900 mb-4">
+  <div className="py-8 md:py-12 bg-neutral-50">
+    <div className="container mx-auto px-2 sm:px-4">
+      <div className="text-center mb-8 md:mb-12">
+        <h1 className="text-2xl sm:text-3xl md:text-5xl font-display font-bold text-neutral-900 mb-2 md:mb-4">
           Hacer Pedido
         </h1>
-        <p className="text-lg text-neutral-600">
+        <p className="text-base sm:text-lg text-neutral-600">
           Pide nuestro delicioso menú del día
         </p>
       </div>
@@ -265,40 +265,40 @@ const Order = () => {
           <p className="mt-4 text-neutral-600">Cargando menú del día...</p>
         </div>
       ) : dailyMenu ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
             {/* Menu Options */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
-                    <Utensils className="w-6 h-6 text-primary-600" />
+            <div className="lg:col-span-2 space-y-4 md:space-y-6">
+              <div className="bg-white rounded-xl shadow-md p-4 md:p-6">
+                <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary-100 flex items-center justify-center">
+                    <Utensils className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-semibold">Menú del Día</h2>
-                    <p className="text-sm text-neutral-600">Elige tu opción favorita</p>
+                    <h2 className="text-lg sm:text-2xl font-semibold">Menú del Día</h2>
+                    <p className="text-xs sm:text-sm text-neutral-600">Elige tu opción favorita</p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   {/* Complete Menu */}
-                  <div className="border-2 border-primary-200 rounded-xl p-6 bg-gradient-to-br from-primary-50 to-white">
-                    <div className="flex items-start justify-between mb-4">
+                  <div className="border-2 border-primary-200 rounded-xl p-4 md:p-6 bg-gradient-to-br from-primary-50 to-white">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2">
                       <div>
-                        <h3 className="text-xl font-bold text-neutral-900 mb-2">Menú Completo (2 Platos)</h3>
-                        <p className="text-sm text-neutral-600 mb-3">
+                        <h3 className="text-base sm:text-xl font-bold text-neutral-900 mb-1 sm:mb-2">Menú Completo (2 Platos)</h3>
+                        <p className="text-xs sm:text-sm text-neutral-600 mb-2 sm:mb-3">
                           {Array.isArray(dailyMenu.includes)
                             ? dailyMenu.includes.join(' • ')
                             : 'Sin información de platos'}
                         </p>
                       </div>
                       <div className="text-right">
-                        <span className="text-2xl font-bold text-primary-600">
+                        <span className="text-lg sm:text-2xl font-bold text-primary-600">
                           €{typeof dailyMenu.price === 'number' ? dailyMenu.price.toFixed(2) : '--'}
                         </span>
                       </div>
                     </div>
 
-                    <div className="space-y-3 mb-4">
+                    <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
                       <div>
                         <label className="block text-sm font-semibold text-neutral-700 mb-2">
                           Elige un Primero *
@@ -359,7 +359,7 @@ const Order = () => {
 
                     <button
                       onClick={addCompleteMenuToCart}
-                      className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700 transition-colors font-semibold flex items-center justify-center gap-2"
+                      className="w-full bg-primary-600 text-white py-2 sm:py-3 rounded-lg hover:bg-primary-700 transition-colors font-semibold flex items-center justify-center gap-2 text-sm sm:text-base"
                     >
                       <Plus className="w-5 h-5" />
                       Añadir Menú Completo (2 Platos)
@@ -368,18 +368,18 @@ const Order = () => {
 
                   {/* Complete Menu Single Dish */}
                   {dailyMenu.completeSingleDishPrice && (
-                    <div className="border-2 border-primary-200 rounded-xl p-6 bg-gradient-to-br from-orange-50 to-white">
-                      <div className="flex items-start justify-between mb-4">
+                    <div className="border-2 border-primary-200 rounded-xl p-4 md:p-6 bg-gradient-to-br from-orange-50 to-white">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2">
                         <div>
-                          <h3 className="text-xl font-bold text-neutral-900 mb-2">Menú Completo (1 Plato)</h3>
-                          <p className="text-sm text-neutral-600 mb-3">Primero o Segundo • Postre o Café • Pan y Bebida</p>
+                          <h3 className="text-base sm:text-xl font-bold text-neutral-900 mb-1 sm:mb-2">Menú Completo (1 Plato)</h3>
+                          <p className="text-xs sm:text-sm text-neutral-600 mb-2 sm:mb-3">Primero o Segundo • Postre o Café • Pan y Bebida</p>
                         </div>
                         <div className="text-right">
-                          <span className="text-2xl font-bold text-primary-600">€{dailyMenu.completeSingleDishPrice.toFixed(2)}</span>
+                          <span className="text-lg sm:text-2xl font-bold text-primary-600">€{dailyMenu.completeSingleDishPrice.toFixed(2)}</span>
                         </div>
                       </div>
 
-                      <div className="space-y-3 mb-4">
+                      <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
                         <div>
                           <label className="block text-sm font-semibold text-neutral-700 mb-2">
                             Elige un Plato (Primero o Segundo) *
@@ -422,7 +422,7 @@ const Order = () => {
 
                       <button
                         onClick={addCompleteSingleToCart}
-                        className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700 transition-colors font-semibold flex items-center justify-center gap-2"
+                        className="w-full bg-primary-600 text-white py-2 sm:py-3 rounded-lg hover:bg-primary-700 transition-colors font-semibold flex items-center justify-center gap-2 text-sm sm:text-base"
                       >
                         <Plus className="w-5 h-5" />
                         Añadir Menú Completo (1 Plato)
@@ -434,29 +434,29 @@ const Order = () => {
             </div>
 
             {/* Cart and Form */}
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {/* Cart */}
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <ShoppingCart className="w-6 h-6 text-primary-600" />
-                  <h2 className="text-2xl font-semibold">Tu Pedido</h2>
+              <div className="bg-white rounded-xl shadow-md p-4 md:p-6">
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                  <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
+                  <h2 className="text-lg sm:text-2xl font-semibold">Tu Pedido</h2>
                 </div>
 
                 {cart.length === 0 ? (
-                  <p className="text-neutral-500 text-center py-8">
+                  <p className="text-neutral-500 text-center py-6 sm:py-8 text-sm sm:text-base">
                     No hay productos en tu pedido
                   </p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {cart.map((item, index) => (
                       <div
                         key={index}
-                        className="p-3 bg-neutral-50 rounded-lg"
+                        className="p-2 sm:p-3 bg-neutral-50 rounded-lg"
                       >
-                        <div className="flex items-start justify-between mb-2">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-1 sm:mb-2 gap-2">
                           <div className="flex-1">
-                            <h3 className="font-medium text-neutral-900">{item.name}</h3>
-                            <p className="text-sm text-neutral-600">
+                            <h3 className="font-medium text-neutral-900 text-sm sm:text-base">{item.name}</h3>
+                            <p className="text-xs sm:text-sm text-neutral-600">
                               €{item.price.toFixed(2)} × {item.quantity}
                             </p>
                           </div>
@@ -467,7 +467,7 @@ const Order = () => {
                             >
                               <Minus className="w-4 h-4" />
                             </button>
-                            <span className="w-8 text-center font-semibold">
+                            <span className="w-6 sm:w-8 text-center font-semibold">
                               {item.quantity}
                             </span>
                             <button
@@ -486,7 +486,7 @@ const Order = () => {
                         </div>
                         {/* Show selections */}
                         {item.menuType === 'complete' && item.selections && (
-                          <div className="text-xs text-neutral-500 mt-2 border-t border-neutral-200 pt-2">
+                          <div className="text-xs text-neutral-500 mt-1 sm:mt-2 border-t border-neutral-200 pt-1 sm:pt-2">
                             <p>• <strong>Primero:</strong> {item.selections.starter}</p>
                             <p>• <strong>Segundo:</strong> {item.selections.main}</p>
                             <p>• <strong>Postre:</strong> {item.selections.dessert}</p>
@@ -501,8 +501,8 @@ const Order = () => {
                       </div>
                     ))}
                     
-                    <div className="border-t pt-3 mt-4">
-                      <div className="flex justify-between items-center text-xl font-bold">
+                    <div className="border-t pt-2 sm:pt-3 mt-3 sm:mt-4">
+                      <div className="flex justify-between items-center text-base sm:text-xl font-bold">
                         <span>Total:</span>
                         <span className="text-primary-600">€{getTotalPrice().toFixed(2)}</span>
                       </div>
@@ -512,20 +512,20 @@ const Order = () => {
               </div>
 
               {/* Order Form */}
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-xl font-semibold mb-4">Información de Entrega</h2>
+              <div className="bg-white rounded-xl shadow-md p-4 md:p-6">
+                <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Información de Entrega</h2>
                 
-                <form onSubmit={handleSubmitOrder} className="space-y-4">
+                <form onSubmit={handleSubmitOrder} className="space-y-3 sm:space-y-4">
                   {/* Order Type */}
                   <div>
                     <label className="block text-sm font-medium text-neutral-700 mb-2">
                       Tipo de Pedido
                     </label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
                       <button
                         type="button"
                         onClick={() => setOrderType('takeaway')}
-                        className={`p-3 rounded-lg border-2 transition-all ${
+                        className={`p-2 sm:p-3 rounded-lg border-2 transition-all text-xs sm:text-base ${
                           orderType === 'takeaway'
                             ? 'border-primary-600 bg-primary-50 text-primary-700'
                             : 'border-neutral-200 hover:border-neutral-300'
@@ -536,7 +536,7 @@ const Order = () => {
                       <button
                         type="button"
                         onClick={() => setOrderType('dinein')}
-                        className={`p-3 rounded-lg border-2 transition-all ${
+                        className={`p-2 sm:p-3 rounded-lg border-2 transition-all text-xs sm:text-base ${
                           orderType === 'dinein'
                             ? 'border-primary-600 bg-primary-50 text-primary-700'
                             : 'border-neutral-200 hover:border-neutral-300'
@@ -556,7 +556,7 @@ const Order = () => {
                       type="text"
                       value={customerInfo.name}
                       onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
-                      className="input-field"
+                      className="input-field text-sm sm:text-base"
                       required
                     />
                   </div>
@@ -569,7 +569,7 @@ const Order = () => {
                       type="tel"
                       value={customerInfo.phone}
                       onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
-                      className="input-field"
+                      className="input-field text-sm sm:text-base"
                       required
                     />
                   </div>
@@ -581,7 +581,7 @@ const Order = () => {
                     <textarea
                       value={customerInfo.notes}
                       onChange={(e) => setCustomerInfo({ ...customerInfo, notes: e.target.value })}
-                      className="input-field"
+                      className="input-field text-sm sm:text-base"
                       rows="3"
                       placeholder="Alergias, preferencias, etc."
                     />
@@ -590,7 +590,7 @@ const Order = () => {
                   <button
                     type="submit"
                     disabled={cart.length === 0 || submitting}
-                    className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full btn-primary text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submitting ? 'Procesando...' : 'Realizar Pedido'}
                   </button>
