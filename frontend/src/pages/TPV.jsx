@@ -1,8 +1,96 @@
 import { Navigate } from 'react-router-dom'
 import { useAdmin } from '../hooks/useAdmin'
+import { dishesAPI, categoriesAPI } from '../services/api'
+import { useEffect, useState } from 'react'
 
 const TPV = () => {
+      const [mesa, setMesa] = useState(1)
+      const [ticket, setTicket] = useState([])
+      const [ticketsPorMesa, setTicketsPorMesa] = useState(Array(10).fill([]))
+      const [ticketNamesPorMesa, setTicketNamesPorMesa] = useState(Array(10).fill('Ticket'))
+      const [ticketName, setTicketName] = useState('Ticket')
+      const [editingName, setEditingName] = useState(false)
+
+      // Cambiar de mesa y cargar su ticket
+      const handleMesaChange = (num) => {
+        setMesa(num)
+        setTicket(ticketsPorMesa[num - 1] || [])
+        setTicketName(ticketNamesPorMesa[num - 1] || 'Ticket actual')
+      }
+
+      // Guardar ticket y nombre en la mesa actual
+      useEffect(() => {
+        setTicketsPorMesa(prev => {
+          const updated = [...prev]
+          updated[mesa - 1] = ticket
+          return updated
+        })
+      }, [ticket, mesa])
+
+      useEffect(() => {
+        setTicketNamesPorMesa(prev => {
+          const updated = [...prev]
+          updated[mesa - 1] = ticketName
+          return updated
+        })
+      }, [ticketName, mesa])
+    // Eliminada declaración duplicada de ticket
+
+    // Añadir producto al ticket
+    const handleAdd = (dish) => {
+      setTicket(prev => {
+        const idx = prev.findIndex(item => item.id === dish.id)
+        if (idx >= 0) {
+          // Si ya está, suma cantidad SIN mutar el array
+          const updated = [...prev]
+          updated[idx] = { ...updated[idx], cantidad: updated[idx].cantidad + 1 }
+          return updated
+        } else {
+          return [...prev, { ...dish, cantidad: 1 }]
+        }
+      })
+    }
+
+    // Modificar cantidad
+    const handleChangeQty = (id, delta) => {
+      setTicket(prev => prev.map(item =>
+        item.id === id ? { ...item, cantidad: Math.max(1, item.cantidad + delta) } : item
+      ))
+    }
+
+    // Eliminar producto
+    const handleRemove = (id) => {
+      setTicket(prev => prev.filter(item => item.id !== id))
+    }
+
+    // Calcular total
+    const total = ticket.reduce((sum, item) => sum + item.price * item.cantidad, 0)
   const { isAdmin, loading } = useAdmin()
+  const [dishes, setDishes] = useState([])
+  const [categories, setCategories] = useState([])
+  const [loadingProducts, setLoadingProducts] = useState(true)
+  const [search, setSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('')
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoadingProducts(true)
+      try {
+        const [dishRes, catRes] = await Promise.all([
+          dishesAPI.getAll(),
+          categoriesAPI.getAll()
+        ])
+        setDishes(dishRes.data)
+        setCategories(catRes.data)
+      } catch (e) {
+        setDishes([])
+        setCategories([])
+      } finally {
+        setLoadingProducts(false)
+      }
+    }
+    fetchData()
+  }, [])
 
   if (loading) return <div className="text-center py-12">Cargando...</div>
   if (!isAdmin) return <Navigate to="/" replace />
@@ -11,8 +99,10 @@ const TPV = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Cabecera */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-        <h1 className="text-3xl font-bold">TPV - Terminal Punto de Venta</h1>
-        <button className="btn-primary px-6 py-2">Nuevo ticket</button>
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold">TPV - Terminal Punto de Venta</h1>
+        </div>
+        <button className="btn-primary px-6 py-2" onClick={() => setTicket([])}>Nuevo ticket</button>
       </div>
 
       {/* Zona central mejorada */}
@@ -25,27 +115,47 @@ const TPV = () => {
               type="text"
               placeholder="Buscar producto o plato..."
               className="input-field flex-1"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
             />
-            <select className="input-field w-48">
+            <select className="input-field w-32" value={mesa} onChange={e => handleMesaChange(Number(e.target.value))}>
+              {Array.from({length: 10}, (_, i) => (
+                <option key={i+1} value={i+1}>Mesa {i+1}</option>
+              ))}
+            </select>
+            <select className="input-field w-56" value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)}>
               <option value="">Todas las categorías</option>
-              <option value="platos">Platos</option>
-              <option value="bebidas">Bebidas</option>
-              <option value="menus">Menús</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
             </select>
           </div>
           {/* Listado de productos con scroll */}
           <div className="flex-1 overflow-y-auto pr-1">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {[...Array(20)].map((_, i) => (
-                <div key={i} className="bg-white rounded-xl shadow p-4 flex flex-col items-center">
-                  <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center mb-2">
-                    <span className="text-xl font-bold text-primary-600">🍽️</span>
-                  </div>
-                  <div className="font-semibold mb-1 text-center text-sm">Producto {i+1}</div>
-                  <div className="text-primary-600 font-bold mb-2 text-sm">€{((i+1)*2).toFixed(2)}</div>
-                  <button className="btn-primary w-full py-1 text-sm">Añadir</button>
-                </div>
-              ))}
+              {loadingProducts ? (
+                <div className="col-span-full text-center py-8">Cargando productos...</div>
+              ) : (
+                dishes
+                  .filter(dish =>
+                    (!selectedCategory || dish.categoryId === selectedCategory) &&
+                    (!search || dish.name.toLowerCase().includes(search.toLowerCase()))
+                  )
+                  .map((dish) => (
+                    <div key={dish.id} className="bg-white rounded-xl shadow p-4 flex flex-col items-center">
+                      <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center mb-2">
+                        {dish.image ? (
+                          <img src={dish.image} alt={dish.name} className="w-12 h-12 object-cover rounded-full" />
+                        ) : (
+                          <span className="text-xl font-bold text-primary-600">🍽️</span>
+                        )}
+                      </div>
+                      <div className="font-semibold mb-1 text-center text-sm">{dish.name}</div>
+                      <div className="text-primary-600 font-bold mb-2 text-sm">€{dish.price.toFixed(2)}</div>
+                      <button className="btn-primary w-full py-1 text-sm" onClick={() => handleAdd(dish)}>Añadir</button>
+                    </div>
+                  ))
+              )}
             </div>
           </div>
         </div>
@@ -53,28 +163,52 @@ const TPV = () => {
         {/* Columna derecha: ticket con scroll y cabecera fija */}
         <div className="flex flex-col h-full">
           <div className="bg-white rounded-xl shadow-md p-6 mb-6 flex flex-col h-2/3 min-h-[320px] max-h-[380px]">
-            <h2 className="text-xl font-bold mb-4 flex-shrink-0">Ticket actual</h2>
-            {/* Lista de productos en el ticket (simulado) con scroll */}
+            <div className="flex items-center mb-4 flex-shrink-0">
+              {editingName ? (
+                <input
+                  className="input-field text-xl font-bold mr-2"
+                  value={ticketName}
+                  onChange={e => setTicketName(e.target.value)}
+                  onBlur={() => setEditingName(false)}
+                  autoFocus
+                  ref={el => el && el.select()}
+                />
+              ) : (
+                <h2 className="text-xl font-bold mr-2">{ticketName}</h2>
+              )}
+              <button
+                className="text-neutral-500 hover:text-primary-600 text-xl p-1"
+                onClick={() => setEditingName(true)}
+                title="Editar nombre del ticket"
+                style={{ lineHeight: 1 }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6">
+                  <path d="M15.232 5.232a2.5 2.5 0 0 1 0 3.536l-7.5 7.5A2.5 2.5 0 0 1 6.5 17H3a1 1 0 0 1-1-1v-3.5a2.5 2.5 0 0 1 .732-1.768l7.5-7.5a2.5 2.5 0 0 1 3.536 0zm-9.464 9.464a.5.5 0 0 0 .354.146H6.5v-1.232a.5.5 0 0 0-.146-.354l-1.232-1.232a.5.5 0 0 0-.354-.146H3.5v1.232a.5.5 0 0 0 .146.354l1.232 1.232z" />
+                </svg>
+              </button>
+            </div>
+            {/* Lista de productos en el ticket real */}
             <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1">
-              {Array.from({length: 12}, (_, idx) => ({nombre:'Producto '+(idx+1),precio:1.5+idx,cantidad:1+idx%3})).map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between gap-2">
-                  <div>
-                    <div className="font-medium text-sm">{item.nombre}</div>
-                    <div className="text-xs text-neutral-500">€{item.precio.toFixed(2)} x {item.cantidad}</div>
+              {ticket.length === 0 ? (
+                <div className="text-neutral-400 text-center py-8">No hay productos en el ticket</div>
+              ) : (
+                ticket.map((item) => (
+                  <div key={item.id} className="grid grid-cols-[1fr,120px,60px] items-center gap-2">
+                    <div className="font-medium text-sm truncate">{item.name}</div>
+                    <div className="flex items-center gap-1 justify-center">
+                      <button className="px-2 py-1 bg-neutral-100 rounded w-8" onClick={() => handleChangeQty(item.id, -1)}>-</button>
+                      <span className="w-8 text-center">{item.cantidad}</span>
+                      <button className="px-2 py-1 bg-neutral-100 rounded w-8" onClick={() => handleChangeQty(item.id, 1)}>+</button>
+                      <button className="ml-2 text-red-500 hover:text-red-700 w-8" onClick={() => handleRemove(item.id)}>🗑️</button>
+                    </div>
+                    <div className="font-semibold text-sm text-right">€{(item.price*item.cantidad).toFixed(2)}</div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button className="px-2 py-1 bg-neutral-100 rounded">-</button>
-                    <span className="w-6 text-center">{item.cantidad}</span>
-                    <button className="px-2 py-1 bg-neutral-100 rounded">+</button>
-                    <button className="ml-2 text-red-500 hover:text-red-700">🗑️</button>
-                  </div>
-                  <div className="font-semibold text-sm">€{(item.precio*item.cantidad).toFixed(2)}</div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             <div className="border-t pt-3 mt-3 flex justify-between text-lg font-bold flex-shrink-0">
               <span>Total:</span>
-              <span className="text-primary-600">€42.00</span>
+              <span className="text-primary-600">€{total.toFixed(2)}</span>
             </div>
           </div>
           {/* Cobro */}

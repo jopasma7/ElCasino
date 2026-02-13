@@ -31,7 +31,7 @@ function DishImage({ src, name }) {
 import { Lock, Plus, Edit, Trash2, LogOut, ClipboardList, Eye, EyeOff, X } from 'lucide-react'
 
 const MySwal = withReactContent(Swal)
-import { dishesAPI, galleryAPI, dailyMenuAPI, dailyMenuOptionsAPI, ordersAPI } from '../services/api'
+import { dishesAPI, galleryAPI, dailyMenuAPI, dailyMenuOptionsAPI, ordersAPI, categoriesAPI } from '../services/api'
 import { useAdmin } from '../hooks/useAdmin'
 
 const Admin = () => {
@@ -130,6 +130,7 @@ const Admin = () => {
 }
 
 // Component for managing dishes
+
 const DishesManager = () => {
   const [dishes, setDishes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -141,19 +142,29 @@ const DishesManager = () => {
     name: '',
     description: '',
     price: '',
-    category: 'entrantes',
+    category: '',
     available: true,
     image: null
   })
+  const [categories, setCategories] = useState([{ value: 'all', label: 'Todos', id: 'all' }])
+  const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const [newCategory, setNewCategory] = useState('')
+  const [editingCategoryId, setEditingCategoryId] = useState(null)
+  const [editingCategoryName, setEditingCategoryName] = useState('')
 
-  const categories = [
-    { value: 'all', label: 'Todos' },
-    { value: 'entrantes', label: 'Entrantes' },
-    { value: 'primeros', label: 'Primeros' },
-    { value: 'segundos', label: 'Segundos' },
-    { value: 'postres', label: 'Postres' },
-    { value: 'bebidas', label: 'Bebidas' }
-  ]
+  useEffect(() => {
+    fetchDishes()
+    fetchCategories()
+  }, [])
+
+  const fetchCategories = async () => {
+    try {
+      const res = await categoriesAPI.getAll()
+      setCategories([{ value: 'all', label: 'Todos', id: 'all' }, ...res.data.map(c => ({ value: c.id, label: c.name, id: c.id }))])
+    } catch (e) {
+      setCategories([{ value: 'all', label: 'Todos', id: 'all' }])
+    }
+  }
 
   useEffect(() => {
     fetchDishes()
@@ -227,7 +238,7 @@ const DishesManager = () => {
       payload.append('name', formData.name)
       payload.append('description', formData.description)
       payload.append('price', formData.price)
-      payload.append('category', formData.category)
+      payload.append('categoryId', formData.category)
       payload.append('available', formData.available)
       if (formData.image) {
         payload.append('image', formData.image)
@@ -246,7 +257,7 @@ const DishesManager = () => {
         name: '',
         description: '',
         price: '',
-        category: 'entrantes',
+        category: '',
         available: true,
         image: null
       })
@@ -256,6 +267,54 @@ const DishesManager = () => {
       toast.error(editingId ? 'Error al actualizar plato' : 'Error al crear plato')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleAddCategory = async (e) => {
+    e.preventDefault()
+    if (!newCategory.trim()) return
+    try {
+      const res = await categoriesAPI.create({ name: newCategory })
+      setCategories([{ value: 'all', label: 'Todos', id: 'all' }, ...categories.slice(1), { value: res.data.id, label: res.data.name, id: res.data.id }])
+      setNewCategory('')
+      setShowCategoryModal(false)
+      toast.success('Categoría añadida')
+    } catch (e) {
+      toast.error('Error al crear categoría')
+    }
+  }
+
+  const handleEditCategory = (cat) => {
+    setEditingCategoryId(cat.id)
+    setEditingCategoryName(cat.label)
+  }
+
+  const handleUpdateCategory = async (e) => {
+    e.preventDefault()
+    if (!editingCategoryName.trim()) return
+    try {
+      await categoriesAPI.update(editingCategoryId, { name: editingCategoryName })
+      setCategories(categories.map(c => c.id === editingCategoryId ? { ...c, label: editingCategoryName } : c))
+      setEditingCategoryId(null)
+      setEditingCategoryName('')
+      toast.success('Categoría actualizada')
+    } catch (e) {
+      toast.error('Error al actualizar categoría')
+    }
+  }
+
+  const handleDeleteCategory = async (cat) => {
+    if (cat.id === 'all') return
+    const confirm = window.confirm(`¿Seguro que quieres eliminar la categoría "${cat.label}"?`)
+    if (!confirm) return
+    try {
+      await categoriesAPI.delete(cat.id)
+      setCategories(categories.filter(c => c.id !== cat.id))
+      toast.success('Categoría eliminada')
+      // Si la categoría eliminada estaba seleccionada, volver a 'all'
+      if (selectedCategory === cat.id) setSelectedCategory('all')
+    } catch (e) {
+      toast.error('Error al eliminar categoría')
     }
   }
 
@@ -281,26 +340,37 @@ const DishesManager = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 gap-2 flex-wrap">
         <h2 className="text-2xl font-semibold">Platos de la Carta</h2>
-        <button
-          onClick={() => {
-            setEditingId(null)
-            setFormData({
-              name: '',
-              description: '',
-              price: '',
-              category: 'entrantes',
-              available: true,
-              image: null
-            })
-            setShowForm(!showForm)
-          }}
-          className="btn-primary flex items-center gap-2"
-        >
-          <Plus className="w-5 h-5" />
-          Añadir Plato
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowCategoryModal(true)}
+            className="btn-secondary flex items-center gap-2"
+            type="button"
+          >
+            <Plus className="w-5 h-5" />
+            Añadir Categoría
+          </button>
+          <button
+            onClick={() => {
+              setEditingId(null)
+              setFormData({
+                name: '',
+                description: '',
+                price: '',
+                category: '',
+                available: true,
+                image: null
+              })
+              setShowForm(!showForm)
+            }}
+            className="btn-primary flex items-center gap-2"
+            type="button"
+          >
+            <Plus className="w-5 h-5" />
+            Añadir Plato
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -321,12 +391,12 @@ const DishesManager = () => {
                 className="input-field"
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                required
               >
-                <option value="entrantes">Entrantes</option>
-                <option value="primeros">Primeros</option>
-                <option value="segundos">Segundos</option>
-                <option value="postres">Postres</option>
-                <option value="bebidas">Bebidas</option>
+                <option value="" disabled>Selecciona una categoría</option>
+                {categories.filter(c => c.value !== 'all').map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.label}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -419,6 +489,58 @@ const DishesManager = () => {
           ))}
         </div>
       </div>
+
+      {/* Modal para añadir/editar/eliminar categoría */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm relative">
+            <button className="absolute top-2 right-2 text-neutral-400 hover:text-neutral-700" onClick={() => { setShowCategoryModal(false); setEditingCategoryId(null); }}>
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-lg font-semibold mb-4">Gestionar categorías</h3>
+            {/* Añadir nueva */}
+            <form onSubmit={handleAddCategory} className="flex gap-2 mb-4">
+              <input
+                className="input-field flex-1"
+                placeholder="Nueva categoría"
+                value={newCategory}
+                onChange={e => setNewCategory(e.target.value)}
+                required
+              />
+              <button type="submit" className="btn-primary">Añadir</button>
+            </form>
+            {/* Listado de categorías */}
+            <ul className="space-y-2 max-h-56 overflow-y-auto">
+              {categories.filter(c => c.id !== 'all').map(cat => (
+                <li key={cat.id} className="flex items-center gap-2">
+                  {editingCategoryId === cat.id ? (
+                    <form onSubmit={handleUpdateCategory} className="flex gap-2 flex-1">
+                      <input
+                        className="input-field flex-1"
+                        value={editingCategoryName}
+                        onChange={e => setEditingCategoryName(e.target.value)}
+                        required
+                        autoFocus
+                      />
+                      <button type="submit" className="btn-primary px-3">Guardar</button>
+                      <button type="button" className="px-3 py-2 rounded-lg bg-neutral-200 hover:bg-neutral-300" onClick={() => setEditingCategoryId(null)}>Cancelar</button>
+                    </form>
+                  ) : (
+                    <>
+                      <span className="flex-1 truncate">{cat.label}</span>
+                      <button className="p-1 text-primary-600 hover:bg-primary-100 rounded" title="Editar" onClick={() => handleEditCategory(cat)}><Edit className="w-4 h-4" /></button>
+                      <button className="p-1 text-red-600 hover:bg-red-100 rounded" title="Eliminar" onClick={() => handleDeleteCategory(cat)}><Trash2 className="w-4 h-4" /></button>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <div className="flex gap-2 justify-end mt-4">
+              <button type="button" className="px-4 py-2 rounded-lg bg-neutral-200 hover:bg-neutral-300" onClick={() => { setShowCategoryModal(false); setEditingCategoryId(null); }}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {filteredDishes.length === 0 ? (
         <p className="text-center text-neutral-500 py-8">
