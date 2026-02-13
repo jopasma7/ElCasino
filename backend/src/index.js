@@ -21,6 +21,7 @@ import dailyMenuOptionsRoutes from './routes/dailyMenuOptions.js'
 import orderRoutes from './routes/orders.js'
 import authRoutes from './routes/auth.js'
 import userRoutes from './routes/users.js'
+import categoryRoutes from './routes/categories.js'
 
 console.log('✅ Rutas importadas correctamente')
 
@@ -66,6 +67,7 @@ app.use('/api/gallery', galleryRoutes)
 app.use('/api/daily-menu', dailyMenuRoutes)
 app.use('/api/daily-menu-options', dailyMenuOptionsRoutes)
 app.use('/api/orders', orderRoutes)
+app.use('/api/categories', categoryRoutes)
 
 console.log('✅ Rutas configuradas correctamente')
 

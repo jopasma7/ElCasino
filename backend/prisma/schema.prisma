@@ -1,5 +1,3 @@
-// This is your Prisma schema file
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,40 +7,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Categorías de platos
-enum DishCategory {
-  entrantes
-  primeros
-  segundos
-  postres
-  bebidas
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  dishes    Dish[]
+
+  @@map("categories")
 }
 
-// Opciones rápidas del menú del día
-enum DailyMenuOptionType {
-  starter
-  main
-  dessert
-}
-
-// Platos de la carta
 model Dish {
-  id          String        @id @default(uuid())
+  id          String     @id @default(uuid())
   name        String
   description String
   price       Float
-  category    DishCategory
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
   image       String?
-  available   Boolean       @default(true)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  
+  available   Boolean   @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   orderItems  OrderItem[]
-  
+
   @@map("dishes")
 }
 
-// Galería de imágenes
 model GalleryImage {
   id        String   @id @default(uuid())
   title     String
@@ -51,17 +42,10 @@ model GalleryImage {
   visible   Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@map("gallery_images")
 }
 
-// Roles de usuario
-enum Role {
-  Usuario
-  Administrador
-}
-
-// Usuarios registrados
 model User {
   id           String   @id @default(uuid())
   name         String
@@ -69,96 +53,64 @@ model User {
   email        String   @unique
   passwordHash String
   avatar       String?
-  role         Role     @default(Usuario)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
+  role         Role     @default(Usuario)
   orders       Order[]
 
   @@map("users")
 }
 
-// Menú del día
 model DailyMenu {
-  id              String   @id @default(uuid())
-  date            DateTime @unique @default(now())
-  price           Float
-  singleDishPrice Float?
+  id                      String   @id @default(uuid())
+  date                    DateTime @unique @default(now())
+  price                   Float
+  includes                String[]
+  starters                String[]
+  mains                   String[]
+  desserts                String[]
+  active                  Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
   completeSingleDishPrice Float?
-  includes        String[] // Array de strings: ["Primero", "Segundo", "Postre", "Bebida"]
-  starters        String[] // Array de primeros platos
-  mains           String[] // Array de segundos platos
-  desserts        String[] // Array de postres
-  active          Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  singleDishPrice         Float?
+
   @@map("daily_menus")
 }
 
-// Tipo de pedido
-enum OrderType {
-  takeaway
-  dinein
-}
-
-// Estado del pedido
-enum OrderStatus {
-  pending
-  confirmed
-  preparing
-  ready
-  completed
-  cancelled
-}
-
-// Pedidos
 model Order {
-  id           String      @id @default(uuid())
-  orderNumber  Int         @unique @default(autoincrement())
-  type         OrderType
-  status       OrderStatus @default(pending)
-
-  userId       String?
-  user         User?       @relation(fields: [userId], references: [id])
-  
-  // Información del cliente
+  id              String      @id @default(uuid())
+  orderNumber     Int         @unique @default(autoincrement())
+  type            OrderType
+  status          OrderStatus @default(pending)
+  userId          String?
   customerName    String
   customerPhone   String
   customerAddress String?
   notes           String?
-  
-  // Items del pedido
-  items        OrderItem[]
-  
-  // Totales
-  subtotal     Float
-  total        Float
-  
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  
+  subtotal        Float
+  total           Float
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  items           OrderItem[]
+  user            User?       @relation(fields: [userId], references: [id])
+
   @@map("orders")
 }
 
-// Items de cada pedido
 model OrderItem {
   id        String   @id @default(uuid())
   orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  
   dishId    String
-  dish      Dish     @relation(fields: [dishId], references: [id])
-  
   quantity  Int
-  price     Float    // Precio en el momento del pedido
-  
+  price     Float
   createdAt DateTime @default(now())
-  
+  dish      Dish     @relation(fields: [dishId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
   @@map("order_items")
 }
 
-// Opciones rápidas para el menú del día
 model DailyMenuOption {
   id        String              @id @default(uuid())
   name      String
@@ -170,13 +122,30 @@ model DailyMenuOption {
   @@map("daily_menu_options")
 }
 
-// Administradores (opcional para futuro)
-model Admin {
-  id        String   @id @default(uuid())
-  username  String   @unique
-  password  String   // Hash bcrypt
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@map("admins")
+
+enum DailyMenuOptionType {
+  starter
+  main
+  dessert
 }
+
+enum Role {
+  Usuario
+  Administrador
+}
+
+enum OrderType {
+  takeaway
+  dinein
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  preparing
+  ready
+  completed
+  cancelled
+}
+
+
