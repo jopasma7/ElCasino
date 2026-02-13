@@ -59,12 +59,13 @@ router.post('/register',
           phone: true,
           email: true,
           avatar: true,
-          createdAt: true
+          createdAt: true,
+          role: true
         }
       })
 
       const token = jwt.sign(
-        { role: 'user', userId: user.id },
+        { role: user.role, userId: user.id },
         process.env.JWT_SECRET,
         { expiresIn: '30d' }
       )
@@ -103,7 +104,7 @@ router.post('/login',
       }
 
       const token = jwt.sign(
-        { role: 'user', userId: user.id },
+        { role: user.role, userId: user.id },
         process.env.JWT_SECRET,
         { expiresIn: '30d' }
       )
@@ -114,7 +115,8 @@ router.post('/login',
           name: user.name,
           phone: user.phone,
           email: user.email,
-          avatar: user.avatar
+          avatar: user.avatar,
+          role: user.role
         },
         token
       })
@@ -124,6 +126,26 @@ router.post('/login',
     }
   }
 )
+
+// Obtener todos los usuarios (público)
+router.get('/', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        role: true
+      }
+    })
+    res.json(users)
+  } catch (error) {
+    console.error('Error al obtener usuarios:', error)
+    res.status(500).json({ error: 'Error al obtener usuarios' })
+  }
+})
 
 // Perfil del usuario autenticado
 router.get('/me', userAuthMiddleware, async (req, res) => {
@@ -136,7 +158,8 @@ router.get('/me', userAuthMiddleware, async (req, res) => {
         phone: true,
         email: true,
         avatar: true,
-        createdAt: true
+        createdAt: true,
+        role: true
       }
     })
 
@@ -212,7 +235,8 @@ router.put('/me',
           phone: true,
           email: true,
           avatar: true,
-          createdAt: true
+          createdAt: true,
+          role: true
         }
       })
 

@@ -9,7 +9,9 @@ export const userAuthMiddleware = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    if (decoded.role !== 'user') {
+
+    // Permitir acceso a usuarios con rol 'Usuario' o 'Administrador'
+    if (!['Usuario', 'Administrador'].includes(decoded.role)) {
       return res.status(403).json({ error: 'No autorizado - Token de usuario requerido' })
     }
 
