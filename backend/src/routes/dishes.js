@@ -82,10 +82,15 @@ router.get('/:id', async (req, res) => {
         image = `/uploads/${req.file.filename}`
         console.log('✅ Usando archivo subido:', image)
       }
-      // Si viene una URL externa en el body (para seeds), usarla directamente
+      // Si viene una URL externa en el body (imageUrl), usarla directamente
+      else if (req.body.imageUrl && req.body.imageUrl.startsWith('http')) {
+        image = req.body.imageUrl
+        console.log('✅ Usando imageUrl externa:', image)
+      }
+      // Si viene una URL externa en el body (image), usarla directamente (compatibilidad)
       else if (req.body.image && req.body.image.startsWith('http')) {
         image = req.body.image
-        console.log('✅ Usando URL externa:', image)
+        console.log('✅ Usando image externa:', image)
       }
 
       console.log('💾 Guardando plato con imagen:', image)
@@ -118,7 +123,11 @@ router.put('/:id', adminAuthMiddleware, upload.single('image'), async (req, res)
     if (req.file) {
       image = `/uploads/${req.file.filename}`;
     }
-    // Si viene una URL externa en el body, usarla directamente
+    // Si viene una URL externa en el body (imageUrl), usarla directamente
+    else if (req.body.imageUrl && req.body.imageUrl.startsWith('http')) {
+      image = req.body.imageUrl;
+    }
+    // Si viene una URL externa en el body (image), usarla directamente (compatibilidad)
     else if (req.body.image && req.body.image.startsWith('http')) {
       image = req.body.image;
     }

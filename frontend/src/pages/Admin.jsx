@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { VERSION } from '../version';
 import { toast } from 'react-toastify'
 import Swal from 'sweetalert2'
@@ -150,7 +150,8 @@ const DishesManager = () => {
     price: '',
     category: '',
     available: true,
-    image: null
+    image: null,
+    imageUrl: '' 
   })
   const [categories, setCategories] = useState([{ value: 'all', label: 'Todos', id: 'all' }])
   const [showCategoryModal, setShowCategoryModal] = useState(false)
@@ -218,6 +219,13 @@ const DishesManager = () => {
     }
   }
 
+  const filteredDishes = useMemo(() => {
+    return selectedCategory === 'all'
+      ? dishes
+      : dishes.filter(d => d.categoryId === selectedCategory)
+  }, [dishes, selectedCategory]);
+
+
   if (loading) {
     return <div className="text-center py-8">Cargando...</div>
   }
@@ -230,7 +238,8 @@ const DishesManager = () => {
       price: dish.price.toString(),
       category: dish.categoryId, // Usar el id de la categoría
       available: dish.available,
-      image: null
+      image: null,
+      imageUrl: dish.imageUrl || ''
     })
     setShowForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -239,9 +248,13 @@ const DishesManager = () => {
   const handleCreate = async (e) => {
     e.preventDefault()
     setSubmitting(true)
-    // Validar que la categoría sea válida
     if (!formData.category || formData.category === 'all') {
       toast.error('Selecciona una categoría válida para el plato.')
+      setSubmitting(false)
+      return
+    }
+    if (!formData.image && !formData.imageUrl) {
+      toast.error('Debes subir una imagen o poner una URL.')
       setSubmitting(false)
       return
     }
@@ -254,24 +267,29 @@ const DishesManager = () => {
       payload.append('available', formData.available)
       if (formData.image) {
         payload.append('image', formData.image)
+      } else if (formData.imageUrl) {
+        payload.append('imageUrl', formData.imageUrl)
       }
 
       if (editingId) {
-        const response = await dishesAPI.update(editingId, payload)
-        setDishes(dishes.map(d => d.id === editingId ? response.data : d))
+        await dishesAPI.update(editingId, payload)
         toast.success('Plato actualizado correctamente')
       } else {
-        const response = await dishesAPI.create(payload)
-        setDishes([response.data, ...dishes])
+        await dishesAPI.create(payload)
         toast.success('Plato creado correctamente')
       }
+
+      setLoading(true);
+      // Recargar la lista completa para asegurar URLs actualizadas
+      await fetchDishes();
       setFormData({
         name: '',
         description: '',
         price: '',
         category: '',
         available: true,
-        image: null
+        image: null,
+        imageUrl: ''
       })
       setEditingId(null)
       setShowForm(false)
@@ -370,10 +388,6 @@ const DishesManager = () => {
     }
   }
 
-  const filteredDishes = selectedCategory === 'all' 
-    ? dishes 
-    : dishes.filter(d => d.categoryId === selectedCategory)
-
   const getDishCountByCategory = (categoryId) => {
     if (categoryId === 'all') return dishes.length
     return dishes.filter(d => d.categoryId === categoryId).length
@@ -401,7 +415,8 @@ const DishesManager = () => {
                 price: '',
                 category: '',
                 available: true,
-                image: null
+                image: null,
+                imageUrl: ''
               })
               setShowForm(!showForm)
             }}
@@ -468,8 +483,15 @@ const DishesManager = () => {
               <input
                 type="file"
                 accept="image/*"
-                className="input-field"
-                onChange={(e) => setFormData({ ...formData, image: e.target.files?.[0] || null })}
+                onChange={e => setFormData({ ...formData, image: e.target.files[0] })}
+              />
+              <div className="text-xs text-neutral-400 mt-1">O pega una URL de imagen:</div>
+              <input
+                type="url"
+                className="input-field mt-1"
+                placeholder="https://..."
+                value={formData.imageUrl}
+                onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
               />
             </div>
             <div className="flex items-center gap-3 mt-6">
@@ -498,7 +520,8 @@ const DishesManager = () => {
                   price: '',
                   category: 'entrantes',
                   available: true,
-                  image: null
+                  image: null,
+                  imageUrl: ''
                 })
               }}
               className="px-4 py-2 rounded-lg bg-neutral-200 hover:bg-neutral-300 transition-colors"
