@@ -14,6 +14,7 @@ model TicketItem {
   dishId    String
   cantidad  Int
   price     Float
+  customOptions Json?
   ticket    Ticket   @relation(fields: [ticketId], references: [id])
   dish      Dish     @relation(fields: [dishId], references: [id])
 }
@@ -38,18 +39,19 @@ model Category {
 }
 
 model Dish {
-  id          String     @id @default(uuid())
-  name        String
-  description String
-  price       Float
-  categoryId  String
-  category    Category  @relation(fields: [categoryId], references: [id])
-  image       String?
-  available   Boolean   @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  orderItems  OrderItem[]
-  ticketItems TicketItem[]
+  id            String     @id @default(uuid())
+  name          String
+  description   String
+  price         Float
+  categoryId    String
+  category      Category  @relation(fields: [categoryId], references: [id])
+  image         String?
+  available     Boolean   @default(true)
+  customOptions Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  orderItems    OrderItem[]
+  ticketItems   TicketItem[]
 
   @@map("dishes")
 }

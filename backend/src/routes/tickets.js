@@ -42,7 +42,8 @@ router.post('/:mesa', async (req, res) => {
           ticketId: ticket.id,
           dishId: item.dishId,
           cantidad: item.cantidad,
-          price: item.price
+          price: item.price,
+          customOptions: item.customOptions ? item.customOptions : undefined
         }
       });
     }

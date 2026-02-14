@@ -44,7 +44,10 @@ router.get('/:id', async (req, res) => {
   }
 })
 
+
 // POST - Crear nuevo plato (requiere autenticación)
+router.post(
+  '/',
   adminAuthMiddleware,
   (req, res, next) => {
     // Si es JSON, saltamos multer
@@ -58,7 +61,7 @@ router.get('/:id', async (req, res) => {
     body('name').notEmpty().withMessage('El nombre es requerido'),
     body('description').notEmpty().withMessage('La descripción es requerida'),
     body('price').isFloat({ min: 0 }).withMessage('El precio debe ser mayor a 0'),
-    body('category').notEmpty().withMessage('La categoría es requerida')
+    body('categoryId').notEmpty().withMessage('La categoría es requerida')
   ],
   async (req, res) => {
     try {
@@ -95,6 +98,20 @@ router.get('/:id', async (req, res) => {
 
       console.log('💾 Guardando plato con imagen:', image)
 
+      // Parsear customOptions si viene en el body (puede ser string o JSON)
+      let customOptions = undefined;
+      if (req.body.customOptions) {
+        try {
+          if (typeof req.body.customOptions === 'string') {
+            customOptions = JSON.parse(req.body.customOptions);
+          } else {
+            customOptions = req.body.customOptions;
+          }
+        } catch (e) {
+          console.error('Error al parsear customOptions:', e);
+        }
+      }
+
       const dish = await prisma.dish.create({
         data: {
           name,
@@ -102,7 +119,8 @@ router.get('/:id', async (req, res) => {
           price: parseFloat(price),
           categoryId,
           image,
-          available: available !== undefined ? (typeof available === 'boolean' ? available : available === 'true') : true
+          available: available !== undefined ? (typeof available === 'boolean' ? available : available === 'true') : true,
+          ...(customOptions && { customOptions })
         }
       })
 
@@ -112,6 +130,7 @@ router.get('/:id', async (req, res) => {
       res.status(500).json({ error: 'Error al crear plato' })
     }
   }
+)
 
 // PUT - Actualizar plato (requiere autenticación)
 router.put('/:id', adminAuthMiddleware, upload.single('image'), async (req, res) => {
@@ -132,13 +151,29 @@ router.put('/:id', adminAuthMiddleware, upload.single('image'), async (req, res)
       image = req.body.image;
     }
 
+
+    // Parsear customOptions si viene en el body (puede ser string o JSON)
+    let customOptions = undefined;
+    if (req.body.customOptions) {
+      try {
+        if (typeof req.body.customOptions === 'string') {
+          customOptions = JSON.parse(req.body.customOptions);
+        } else {
+          customOptions = req.body.customOptions;
+        }
+      } catch (e) {
+        console.error('Error al parsear customOptions:', e);
+      }
+    }
+
     const updateData = {
       ...(name && { name }),
       ...(description && { description }),
       ...(price && { price: parseFloat(price) }),
       ...(categoryId && { categoryId }),
       ...(available !== undefined && { available: available === 'true' }),
-      ...(image !== undefined && { image })
+      ...(image !== undefined && { image }),
+      ...(customOptions && { customOptions })
     };
 
     const dish = await prisma.dish.update({
