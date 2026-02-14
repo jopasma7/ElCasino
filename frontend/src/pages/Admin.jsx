@@ -253,7 +253,8 @@ const DishesManager = () => {
       setSubmitting(false)
       return
     }
-    if (!formData.image && !formData.imageUrl) {
+    // Solo exigir imagen/URL al crear
+    if (!editingId && !formData.image && !formData.imageUrl) {
       toast.error('Debes subir una imagen o poner una URL.')
       setSubmitting(false)
       return
