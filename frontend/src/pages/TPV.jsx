@@ -1,67 +1,186 @@
 import { Navigate } from 'react-router-dom'
 import { useAdmin } from '../hooks/useAdmin'
 import { dishesAPI, categoriesAPI } from '../services/api'
-import { useEffect, useState } from 'react'
+import { ticketsAPI } from '../services/ticketsAPI'
+import { useEffect, useState, useRef } from 'react'
+import { toast } from 'react-toastify'
+import { io } from 'socket.io-client'
+import { userProfileAPI } from '../services/api'
 
 const TPV = () => {
+  const socketRef = useRef(null)
+  const [cobroOpen, setCobroOpen] = useState(false);
       const [mesa, setMesa] = useState(1)
       const [ticket, setTicket] = useState([])
       const [ticketsPorMesa, setTicketsPorMesa] = useState(Array(10).fill([]))
       const [ticketNamesPorMesa, setTicketNamesPorMesa] = useState(Array(10).fill('Ticket'))
-      const [ticketName, setTicketName] = useState('Ticket')
+      const [ticketName, setTicketName] = useState(`Ticket Mesa 1`)
       const [editingName, setEditingName] = useState(false)
 
       // Cambiar de mesa y cargar su ticket
-      const handleMesaChange = (num) => {
+      const handleMesaChange = async (num) => {
         setMesa(num)
-        setTicket(ticketsPorMesa[num - 1] || [])
-        setTicketName(ticketNamesPorMesa[num - 1] || 'Ticket actual')
+        // Leer ticket desde backend
+        try {
+          const res = await ticketsAPI.getTicket(num)
+          if (res.data) {
+            setTicketName(res.data.name)
+            setTicket(res.data.items.map(item => ({
+              id: item.dishId,
+              name: item.dish.name,
+              price: item.price,
+              cantidad: item.cantidad
+            })))
+          } else {
+            setTicket([])
+            setTicketName(`Ticket Mesa ${num}`)
+          }
+        } catch {
+          setTicket([])
+          setTicketName(`Ticket Mesa ${num}`)
+        }
       }
 
-      // Guardar ticket y nombre en la mesa actual
+      // Al montar, cargar el ticket de la mesa seleccionada por defecto
       useEffect(() => {
-        setTicketsPorMesa(prev => {
-          const updated = [...prev]
-          updated[mesa - 1] = ticket
-          return updated
-        })
-      }, [ticket, mesa])
+        const cargarTicketInicial = async () => {
+          try {
+            const res = await ticketsAPI.getTicket(1);
+            if (res.data) {
+              setTicketName(res.data.name);
+              setTicket(res.data.items.map(item => ({
+                id: item.dishId,
+                name: item.dish.name,
+                price: item.price,
+                cantidad: item.cantidad
+              })));
+            } else {
+              setTicket([]);
+              setTicketName('Ticket Mesa 1');
+            }
+          } catch {
+            setTicket([]);
+            setTicketName('Ticket Mesa 1');
+          }
+        };
+        cargarTicketInicial();
+      }, []);
 
       useEffect(() => {
-        setTicketNamesPorMesa(prev => {
-          const updated = [...prev]
-          updated[mesa - 1] = ticketName
-          return updated
-        })
-      }, [ticketName, mesa])
-    // Eliminada declaración duplicada de ticket
+        // 1. Crear la conexión solo una vez
+        const socket = io('http://localhost:4000')
+        socketRef.current = socket
+
+        // 2. Identificar usuario al conectar
+        const fetchAndIdentify = async () => {
+          try {
+            const res = await userProfileAPI.getMe()
+            const name = res.data?.name || 'Desconocido'
+            socket.emit('identify', { name })
+          } catch {
+            socket.emit('identify', { name: 'Desconocido' })
+          }
+        }
+        fetchAndIdentify()
+
+        // 3. Escuchar ticket actualizado
+        const ticketUpdatedHandler = async (data) => {
+          if (data.mesa === mesa) {
+            try {
+              const res = await ticketsAPI.getTicket(mesa)
+              if (res.data) {
+                setTicketName(res.data.name)
+                setTicket(res.data.items.map(item => ({
+                  id: item.dishId,
+                  name: item.dish.name,
+                  price: item.price,
+                  cantidad: item.cantidad
+                })))
+              } else {
+                setTicket([])
+                setTicketName('Ticket')
+              }
+            } catch {
+              setTicket([])
+              setTicketName('Ticket')
+            }
+          }
+        };
+        socket.on('ticketUpdated', ticketUpdatedHandler);
+
+        // 4. Cleanup: cerrar conexión al desmontar
+        return () => {
+          socket.off('ticketUpdated', ticketUpdatedHandler);
+          socket.disconnect();
+        }
+      }, [])
+
+      // Emitir ticket actualizado al backend y guardar en DB
+      const [isUpdating, setIsUpdating] = useState(false);
+      const [pendingUpdate, setPendingUpdate] = useState(null);
+      const emitTicketUpdate = async (ticketData = null) => {
+        const data = ticketData || { mesa, ticket, ticketName };
+        if (isUpdating) {
+          setPendingUpdate(data);
+          return;
+        }
+        setIsUpdating(true);
+        try {
+          socketRef.current.emit('updateTicket', {
+            mesa: data.mesa,
+            ticket: data.ticket,
+            ticketName: data.ticketName
+          });
+          const payload = {
+            name: data.ticketName,
+            items: data.ticket.map(item => ({
+              dishId: item.id,
+              cantidad: item.cantidad,
+              price: item.price
+            }))
+          };
+          await ticketsAPI.updateTicket(data.mesa, payload);
+          toast.success('Ticket enviado correctamente', { position: 'top-right' });
+        } catch (e) {
+          toast.error('Error al enviar el ticket', { position: 'top-right' });
+        } finally {
+          setIsUpdating(false);
+        }
+      };
 
     // Añadir producto al ticket
-    const handleAdd = (dish) => {
-      setTicket(prev => {
-        const idx = prev.findIndex(item => item.id === dish.id)
-        if (idx >= 0) {
-          // Si ya está, suma cantidad SIN mutar el array
-          const updated = [...prev]
-          updated[idx] = { ...updated[idx], cantidad: updated[idx].cantidad + 1 }
-          return updated
-        } else {
-          return [...prev, { ...dish, cantidad: 1 }]
-        }
-      })
-    }
+      const handleAdd = (dish) => {
+        setTicket(prev => {
+          const idx = prev.findIndex(item => item.id === dish.id);
+          let updated;
+          if (idx >= 0) {
+          updated = [...prev];
+          updated[idx] = { ...updated[idx], cantidad: updated[idx].cantidad + 1 };
+          } else {
+          updated = [...prev, { ...dish, cantidad: 1 }];
+          }
+          return updated;
+        });
+      };
 
     // Modificar cantidad
-    const handleChangeQty = (id, delta) => {
-      setTicket(prev => prev.map(item =>
-        item.id === id ? { ...item, cantidad: Math.max(1, item.cantidad + delta) } : item
-      ))
-    }
+      const handleChangeQty = (id, delta) => {
+        setTicket(prev => {
+          const updated = prev.map(item =>
+            item.id === id ? { ...item, cantidad: Math.max(1, item.cantidad + delta) } : item
+          );
+          return updated;
+        });
+      };
 
     // Eliminar producto
-    const handleRemove = (id) => {
-      setTicket(prev => prev.filter(item => item.id !== id))
-    }
+      const handleRemove = (id) => {
+          setTicket(prev => {
+            const updated = prev.filter(item => item.id !== id);
+            return updated;
+          });
+      };
+      // Eliminado el envío automático del ticket en cada cambio
 
     // Calcular total
     const total = ticket.reduce((sum, item) => sum + item.price * item.cantidad, 0)
@@ -102,7 +221,7 @@ const TPV = () => {
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold">TPV - Terminal Punto de Venta</h1>
         </div>
-        <button className="btn-primary px-6 py-2" onClick={() => setTicket([])}>Nuevo ticket</button>
+          {/* Botones de acción eliminados, ahora solo están en la tarjeta de ticket */}
       </div>
 
       {/* Zona central mejorada */}
@@ -162,16 +281,47 @@ const TPV = () => {
 
         {/* Columna derecha: ticket con scroll y cabecera fija */}
         <div className="flex flex-col h-full">
-          <div className="bg-white rounded-xl shadow-md p-6 mb-6 flex flex-col h-2/3 min-h-[320px] max-h-[380px]">
-            <div className="flex items-center mb-4 flex-shrink-0">
+          <div className="bg-white rounded-xl shadow-md p-6 mb-6 flex flex-col h-2/3 min-h-[320px] max-h-[380px] relative">
+            {/* Botones de acción en la esquina superior derecha, posición absoluta */}
+            <div className="absolute top-4 right-4 flex gap-2 z-10">
+              <button
+                className="rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-lg w-10 h-10 flex items-center justify-center text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={async () => {
+                  try {
+                    await ticketsAPI.closeTicket(mesa);
+                  } catch (e) {}
+                  setTicket([]);
+                  setTicketName(`Ticket Mesa ${mesa}`);
+                }}
+                title="Nuevo ticket"
+              >
+                <span role="img" aria-label="Nuevo ticket">➕</span>
+              </button>
+              <button
+                className={`rounded-full w-10 h-10 flex items-center justify-center text-lg shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${ticket.length === 0 || isUpdating ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+                onClick={() => emitTicketUpdate()}
+                disabled={ticket.length === 0 || isUpdating}
+                title="Enviar ticket"
+              >
+                {isUpdating ? (
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                ) : (
+                  <span role="img" aria-label="Enviar">✉️</span>
+                )}
+              </button>
+            </div>
+            <div className="flex items-center mb-4 flex-shrink-0 gap-2">
               {editingName ? (
                 <input
-                  className="input-field text-xl font-bold mr-2"
+                  className="input-field text-base font-semibold mr-2 py-1 px-2 w-36"
                   value={ticketName}
                   onChange={e => setTicketName(e.target.value)}
                   onBlur={() => setEditingName(false)}
                   autoFocus
-                  ref={el => el && el.select()}
+                  style={{ maxWidth: '9rem' }}
                 />
               ) : (
                 <h2 className="text-xl font-bold mr-2">{ticketName}</h2>
@@ -192,8 +342,8 @@ const TPV = () => {
               {ticket.length === 0 ? (
                 <div className="text-neutral-400 text-center py-8">No hay productos en el ticket</div>
               ) : (
-                ticket.map((item) => (
-                  <div key={item.id} className="grid grid-cols-[1fr,120px,60px] items-center gap-2">
+                ticket.map((item, idx) => (
+                  <div key={item.id + '-' + idx} className="grid grid-cols-[1fr,120px,60px] items-center gap-2">
                     <div className="font-medium text-sm truncate">{item.name}</div>
                     <div className="flex items-center gap-1 justify-center">
                       <button className="px-2 py-1 bg-neutral-100 rounded w-8" onClick={() => handleChangeQty(item.id, -1)}>-</button>
@@ -210,24 +360,36 @@ const TPV = () => {
               <span>Total:</span>
               <span className="text-primary-600">€{total.toFixed(2)}</span>
             </div>
+            {/* ...el botón ahora está en la cabecera */}
           </div>
-          {/* Cobro */}
-          <div className="bg-white rounded-xl shadow-md p-6 flex-shrink-0">
-            <h2 className="text-lg font-semibold mb-4">Cobro</h2>
-            <div className="mb-3">
-              <label className="block text-sm mb-1">Método de pago</label>
-              <select className="input-field w-full">
-                <option>Efectivo</option>
-                <option>Tarjeta</option>
-                <option>Bizum</option>
-              </select>
-            </div>
-            <div className="mb-3">
-              <label className="block text-sm mb-1">Importe entregado</label>
-              <input type="number" className="input-field w-full" placeholder="0.00" />
-            </div>
-            <div className="mb-4 text-sm text-neutral-600">Cambio: <span className="font-bold">€0.00</span></div>
-            <button className="btn-primary w-full py-3 text-lg">Cobrar y cerrar ticket</button>
+          {/* Cobro - Panel colapsable */}
+          <div className="bg-white rounded-xl shadow-md flex-shrink-0">
+            <button
+              className="w-full flex items-center justify-between px-6 py-4 focus:outline-none"
+              onClick={() => setCobroOpen(v => !v)}
+              aria-expanded={cobroOpen}
+            >
+              <span className="text-lg font-semibold">Cobro</span>
+              <span className="text-2xl">{cobroOpen ? '▲' : '▼'}</span>
+            </button>
+            {cobroOpen && (
+              <div className="px-6 pb-6">
+                <div className="mb-3 mt-2">
+                  <label className="block text-sm mb-1">Método de pago</label>
+                  <select className="input-field w-full">
+                    <option>Efectivo</option>
+                    <option>Tarjeta</option>
+                    <option>Bizum</option>
+                  </select>
+                </div>
+                <div className="mb-3">
+                  <label className="block text-sm mb-1">Importe entregado</label>
+                  <input type="number" className="input-field w-full" placeholder="0.00" />
+                </div>
+                <div className="mb-4 text-sm text-neutral-600">Cambio: <span className="font-bold">€0.00</span></div>
+                <button className="btn-primary w-full py-3 text-lg">Cobrar y cerrar ticket</button>
+              </div>
+            )}
           </div>
         </div>
       </div>

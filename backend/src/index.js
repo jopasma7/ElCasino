@@ -3,6 +3,8 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
+import http from 'http'
+import { Server as SocketIOServer } from 'socket.io'
 
 console.log('🔄 Iniciando servidor El Casino...')
 
@@ -22,6 +24,7 @@ import orderRoutes from './routes/orders.js'
 import authRoutes from './routes/auth.js'
 import userRoutes from './routes/users.js'
 import categoryRoutes from './routes/categories.js'
+import ticketRoutes from './routes/tickets.js'
 
 console.log('✅ Rutas importadas correctamente')
 
@@ -31,6 +34,7 @@ const __dirname = dirname(__filename)
 const app = express()
 const PORT = process.env.PORT || 4000
 
+
 // Middleware
 const allowedOrigins = [
   'http://localhost:3000',
@@ -39,6 +43,14 @@ const allowedOrigins = [
   'https://el-casino.vercel.app',
   process.env.FRONTEND_URL
 ].filter(Boolean)
+
+const server = http.createServer(app)
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true
+  }
+})
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -68,6 +80,7 @@ app.use('/api/daily-menu', dailyMenuRoutes)
 app.use('/api/daily-menu-options', dailyMenuOptionsRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/categories', categoryRoutes)
+app.use('/api/tickets', ticketRoutes)
 
 console.log('✅ Rutas configuradas correctamente')
 
@@ -94,11 +107,31 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' })
 })
 
+// WebSocket: lógica básica
+io.on('connection', (socket) => {
+  let username = null;
+  // Recibe identificación del usuario
+  socket.on('identify', (data) => {
+    username = data?.name || 'Desconocido';
+    console.log(`🟢 Usuario conectado por WebSocket: ${socket.id} (${username})`);
+  });
+
+  // Recibe actualización de ticket y la reenvía a todos
+  socket.on('updateTicket', (data) => {
+    io.emit('ticketUpdated', data);
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`🔴 Usuario desconectado: ${socket.id} (${username || 'Desconocido'})`);
+  });
+})
+
 // Start server
-const server = app.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor corriendo en puerto ${PORT}`)
   console.log(`📊 Environment: ${process.env.NODE_ENV}`)
   console.log(`✅ El Casino API está listo para recibir peticiones`)
+  console.log('🟢 WebSocket habilitado en backend')
 })
 
 // Manejo de errores no capturados

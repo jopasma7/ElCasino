@@ -1,3 +1,22 @@
+model Ticket {
+  id        String     @id @default(uuid())
+  mesa      Int
+  name      String
+  items     TicketItem[]
+  status    String     @default("open")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model TicketItem {
+  id        String   @id @default(uuid())
+  ticketId  String
+  dishId    String
+  cantidad  Int
+  price     Float
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  dish      Dish     @relation(fields: [dishId], references: [id])
+}
 generator client {
   provider = "prisma-client-js"
 }
@@ -30,6 +49,7 @@ model Dish {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   orderItems  OrderItem[]
+  ticketItems TicketItem[]
 
   @@map("dishes")
 }
