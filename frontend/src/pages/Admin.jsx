@@ -151,8 +151,16 @@ const DishesManager = () => {
     category: '',
     available: true,
     image: null,
-    imageUrl: '' 
+    imageUrl: '',
+    customOptions: [] // [{ type: 'Ingredientes', options: ['Tomate', 'Queso'] }]
   })
+  // Estado auxiliar para nueva opción personalizada
+  const [newOptionType, setNewOptionType] = useState('')
+  const [newOptionValue, setNewOptionValue] = useState('')
+  const [optionTypeIndex, setOptionTypeIndex] = useState(null) // Para añadir opción a tipo existente
+  // Estado para colapsar la sección de imagen
+  const [showImageSection, setShowImageSection] = useState(false)
+  const [showCustomOptions, setShowCustomOptions] = useState(false)
   const [categories, setCategories] = useState([{ value: 'all', label: 'Todos', id: 'all' }])
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [newCategory, setNewCategory] = useState('')
@@ -239,7 +247,8 @@ const DishesManager = () => {
       category: dish.categoryId, // Usar el id de la categoría
       available: dish.available,
       image: null,
-      imageUrl: dish.imageUrl || ''
+      imageUrl: dish.imageUrl || '',
+      customOptions: dish.customOptions || []
     })
     setShowForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -253,12 +262,7 @@ const DishesManager = () => {
       setSubmitting(false)
       return
     }
-    // Solo exigir imagen/URL al crear
-    if (!editingId && !formData.image && !formData.imageUrl) {
-      toast.error('Debes subir una imagen o poner una URL.')
-      setSubmitting(false)
-      return
-    }
+    // Ya no se exige imagen ni URL para crear un plato
     try {
       const payload = new FormData()
       payload.append('name', formData.name)
@@ -270,6 +274,10 @@ const DishesManager = () => {
         payload.append('image', formData.image)
       } else if (formData.imageUrl) {
         payload.append('imageUrl', formData.imageUrl)
+      }
+      // Añadir customOptions como string JSON si hay opciones
+      if (formData.customOptions && formData.customOptions.length > 0) {
+        payload.append('customOptions', JSON.stringify(formData.customOptions))
       }
 
       if (editingId) {
@@ -290,7 +298,8 @@ const DishesManager = () => {
         category: '',
         available: true,
         image: null,
-        imageUrl: ''
+        imageUrl: '',
+        customOptions: []
       })
       setEditingId(null)
       setShowForm(false)
@@ -417,7 +426,8 @@ const DishesManager = () => {
                 category: '',
                 available: true,
                 image: null,
-                imageUrl: ''
+                imageUrl: '',
+                customOptions: []
               })
               setShowForm(!showForm)
             }}
@@ -431,8 +441,131 @@ const DishesManager = () => {
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreate} className="mb-8 border border-neutral-200 rounded-lg p-5 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleCreate} className="mb-8 border border-neutral-200 rounded-lg p-0 md:p-0">
+          {/* Opciones personalizadas dinámicas (colapsable) - SOLO UNA VEZ */}
+          <div className="border border-primary-100 rounded-t-lg mb-0">
+            <button
+              type="button"
+              className="w-full flex items-center justify-between px-4 py-2 bg-primary-50 hover:bg-primary-100 rounded-t-lg focus:outline-none"
+              onClick={() => setShowCustomOptions(v => !v)}
+            >
+              <span className="font-semibold text-primary-700">Opciones personalizadas</span>
+              <span className="text-primary-600 text-xl">{showCustomOptions ? '▲' : '▼'}</span>
+            </button>
+            {showCustomOptions && (
+              <div className="p-4 border-t border-primary-100">
+                {/* Añadir nuevo tipo de opción */}
+                <div className="flex gap-2 mb-2">
+                  <input
+                    className="input-field flex-1"
+                    placeholder="Tipo (ej: Ingredientes, Extras...)"
+                    value={newOptionType}
+                    onChange={e => setNewOptionType(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={() => {
+                      if (!newOptionType.trim()) return;
+                      setFormData({
+                        ...formData,
+                        customOptions: [...formData.customOptions, { type: newOptionType.trim(), options: [] }]
+                      });
+                      setNewOptionType('');
+                    }}
+                  >Añadir tipo</button>
+                </div>
+                {/* Listado de tipos y opciones */}
+                {formData.customOptions.length === 0 && (
+                  <div className="text-sm text-neutral-400 mb-2">No hay tipos añadidos.</div>
+                )}
+                {formData.customOptions.map((opt, idx) => (
+                  <div key={idx} className="mb-3 border border-neutral-200 rounded p-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold text-neutral-700 flex-1">{opt.type}</span>
+                      <button type="button" className="text-red-500 hover:text-red-700" onClick={() => {
+                        setFormData({
+                          ...formData,
+                          customOptions: formData.customOptions.filter((_, i) => i !== idx)
+                        })
+                      }}>Eliminar tipo</button>
+                    </div>
+                    {/* Opciones de este tipo */}
+                    <div className="flex flex-wrap gap-2 mb-1">
+                      {opt.options.map((val, vIdx) => (
+                        <span key={vIdx} className="inline-flex items-center bg-primary-100 text-primary-700 rounded px-2 py-1 text-xs">
+                          {val}
+                          <button type="button" className="ml-1 text-red-400 hover:text-red-700" onClick={() => {
+                            const updated = [...formData.customOptions];
+                            updated[idx].options = updated[idx].options.filter((_, i) => i !== vIdx);
+                            setFormData({ ...formData, customOptions: updated });
+                          }}>×</button>
+                        </span>
+                      ))}
+                    </div>
+                    {/* Añadir nueva opción a este tipo */}
+                    <div className="flex gap-2">
+                      <input
+                        className="input-field flex-1"
+                        placeholder={`Añadir opción a ${opt.type}`}
+                        value={optionTypeIndex === idx ? newOptionValue : ''}
+                        onChange={e => {
+                          setOptionTypeIndex(idx);
+                          setNewOptionValue(e.target.value);
+                        }}
+                        onFocus={() => setOptionTypeIndex(idx)}
+                      />
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => {
+                          if (!newOptionValue.trim()) return;
+                          const updated = [...formData.customOptions];
+                          updated[idx].options = [...updated[idx].options, newOptionValue.trim()];
+                          setFormData({ ...formData, customOptions: updated });
+                          setNewOptionValue('');
+                          setOptionTypeIndex(null);
+                        }}
+                      >Añadir</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sección de precio e imagen */}
+          <div className="w-full rounded-md bg-yellow-100">
+              <button
+                type="button"
+                className="w-full flex items-center justify-between py-3 px-4 bg-primary-50 hover:bg-primary-100 rounded-t-lg focus:outline-none"
+                onClick={() => setShowImageSection(s => !s)}
+                style={{ minWidth: 0 }}
+              >
+                <span className="font-semibold text-primary-700">Imagen</span>
+                <span className="text-primary-600 text-xl">{showImageSection ? '▲' : '▼'}</span>
+              </button>
+              {showImageSection && (
+                <div className="bg-white px-4 pb-4 pt-2 rounded-b-md w-full" style={{ minWidth: 0 }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={e => setFormData({ ...formData, image: e.target.files[0] })}
+                  />
+                  <div className="text-xs text-neutral-400 mt-1">O pega una URL de imagen:</div>
+                  <input
+                    type="url"
+                    className="input-field w-full mt-1"
+                    placeholder="https://..."
+                    value={formData.imageUrl}
+                    onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
+                  />
+                </div>
+              )}
+          </div>
+
+          {/* Sección de datos principales */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-neutral-50 border-b border-neutral-200 px-6 py-6">
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">Nombre</label>
               <input
@@ -456,18 +589,6 @@ const DishesManager = () => {
                 ))}
               </select>
             </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Descripción</label>
-            <textarea
-              className="input-field"
-              rows="3"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              required
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">Precio (€)</label>
               <input
@@ -479,23 +600,22 @@ const DishesManager = () => {
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Imagen</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={e => setFormData({ ...formData, image: e.target.files[0] })}
-              />
-              <div className="text-xs text-neutral-400 mt-1">O pega una URL de imagen:</div>
-              <input
-                type="url"
-                className="input-field mt-1"
-                placeholder="https://..."
-                value={formData.imageUrl}
-                onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
+            <div className="md:col-span-3">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">Descripción</label>
+              <textarea
+                className="input-field"
+                rows="3"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                required
               />
             </div>
-            <div className="flex items-center gap-3 mt-6">
+          </div>
+
+          {/* Botones fuera del colapsable */}
+          <div className="flex flex-row gap-3 justify-end px-6 pb-6 pt-4">
+
+            <div className="flex items-center gap-2 mt-2">
               <input
                 id="dish-available"
                 type="checkbox"
@@ -505,8 +625,6 @@ const DishesManager = () => {
               />
               <label htmlFor="dish-available" className="text-sm text-neutral-700">Mostrar en carta</label>
             </div>
-          </div>
-          <div className="flex gap-3">
             <button type="submit" className="btn-primary" disabled={submitting}>
               {submitting ? 'Guardando...' : (editingId ? 'Actualizar Plato' : 'Guardar Plato')}
             </button>
@@ -519,10 +637,11 @@ const DishesManager = () => {
                   name: '',
                   description: '',
                   price: '',
-                  category: 'entrantes',
+                  category: '',
                   available: true,
                   image: null,
-                  imageUrl: ''
+                  imageUrl: '',
+                  customOptions: []
                 })
               }}
               className="px-4 py-2 rounded-lg bg-neutral-200 hover:bg-neutral-300 transition-colors"

@@ -3,6 +3,7 @@ import { useAdmin } from '../hooks/useAdmin'
 import { dishesAPI, categoriesAPI } from '../services/api'
 import { ticketsAPI } from '../services/ticketsAPI'
 import { useEffect, useState, useRef } from 'react'
+import DishOptionsModal from '../components/DishOptionsModal'
 import { toast } from 'react-toastify'
 import { io } from 'socket.io-client'
 import { userProfileAPI } from '../services/api'
@@ -37,7 +38,8 @@ const TPV = () => {
               id: item.dishId,
               name: item.dish.name,
               price: item.price,
-              cantidad: item.cantidad
+              cantidad: item.cantidad,
+              selectedOptions: item.customOptions // <-- Añadido para mantener customOptions
             })));
           } else {
             setTicket([]);
@@ -60,7 +62,8 @@ const TPV = () => {
                 id: item.dishId,
                 name: item.dish.name,
                 price: item.price,
-                cantidad: item.cantidad
+                cantidad: item.cantidad,
+                selectedOptions: item.customOptions // <-- Añadido para mantener customOptions
               })));
             } else {
               setTicket([]);
@@ -111,7 +114,8 @@ const TPV = () => {
                   id: item.dishId,
                   name: item.dish.name,
                   price: item.price,
-                  cantidad: item.cantidad
+                  cantidad: item.cantidad,
+                  selectedOptions: Array.isArray(item.customOptions) ? item.customOptions : []
                 })))
               } else {
                 setTicket([])
@@ -146,15 +150,26 @@ const TPV = () => {
             items: data.ticket.map(item => ({
               dishId: item.id,
               cantidad: item.cantidad,
-              price: item.price
+              price: item.price,
+              customOptions: item.selectedOptions || undefined
             }))
           };
-          await ticketsAPI.updateTicket(data.mesa, payload);
-          // Emitir evento solo después de guardar
+          const res = await ticketsAPI.updateTicket(data.mesa, payload);
+          // Actualizar ticket local con la respuesta del backend (opcional, pero recomendable)
+          if (res.data && res.data.items) {
+            setTicket(res.data.items.map(item => ({
+              id: item.dishId,
+              name: item.dish.name,
+              price: item.price,
+              cantidad: item.cantidad,
+              selectedOptions: Array.isArray(item.customOptions) ? item.customOptions : []
+            })));
+          }
+          // Emitir evento solo después de guardar, usando el ticket actualizado del backend
           socketRef.current.emit('updateTicket', {
             mesa: data.mesa,
-            ticket: data.ticket,
-            ticketName: data.ticketName
+            ticket: res.data.items,
+            ticketName: res.data.name
           });
           toast.success('Ticket enviado correctamente', { position: 'top-right' });
         } catch (e) {
@@ -165,26 +180,65 @@ const TPV = () => {
       };
 
     // Añadir producto al ticket
+      // Modal para customOptions
+      const [modalOpen, setModalOpen] = useState(false);
+      const [modalDish, setModalDish] = useState(null);
+
+      // Añadir producto al ticket (con soporte para customOptions)
       const handleAdd = (dish) => {
+        if (dish.customOptions && dish.customOptions.length > 0) {
+          setModalDish(dish);
+          setModalOpen(true);
+        } else {
+          setTicket(prev => {
+            const idx = prev.findIndex(item => {
+              const sameId = item.id === dish.id;
+              const noOptions = !item.selectedOptions || item.selectedOptions.length === 0;
+              return sameId && noOptions;
+            });
+            let updated;
+            if (idx >= 0) {
+              updated = [...prev];
+              updated[idx] = { ...updated[idx], cantidad: updated[idx].cantidad + 1 };
+            } else {
+              updated = [...prev, { ...dish, cantidad: 1 }];
+            }
+            return updated;
+          });
+        }
+      };
+
+      // Confirmar selección de opciones y añadir al ticket
+      const handleConfirmOptions = (selectedOptions) => {
+        if (!modalDish) return;
         setTicket(prev => {
-          const idx = prev.findIndex(item => item.id === dish.id);
+          // Buscar si ya existe un plato igual con las mismas opciones
+          const idx = prev.findIndex(item => item.id === modalDish.id && JSON.stringify(item.selectedOptions) === JSON.stringify(selectedOptions));
           let updated;
           if (idx >= 0) {
-          updated = [...prev];
-          updated[idx] = { ...updated[idx], cantidad: updated[idx].cantidad + 1 };
+            updated = [...prev];
+            updated[idx] = { ...updated[idx], cantidad: updated[idx].cantidad + 1 };
           } else {
-          updated = [...prev, { ...dish, cantidad: 1 }];
+            updated = [...prev, { ...modalDish, cantidad: 1, selectedOptions }];
           }
           return updated;
         });
+        setModalOpen(false);
+        setModalDish(null);
       };
 
     // Modificar cantidad
-      const handleChangeQty = (id, delta) => {
+      // Cambia la cantidad solo del item con el mismo id y mismas opciones personalizadas
+      const handleChangeQty = (id, delta, selectedOptions) => {
         setTicket(prev => {
-          const updated = prev.map(item =>
-            item.id === id ? { ...item, cantidad: Math.max(1, item.cantidad + delta) } : item
-          );
+          const updated = prev.map(item => {
+            const sameId = item.id === id;
+            const sameOptions = JSON.stringify(item.selectedOptions || []) === JSON.stringify(selectedOptions || []);
+            if (sameId && sameOptions) {
+              return { ...item, cantidad: Math.max(1, item.cantidad + delta) };
+            }
+            return item;
+          });
           return updated;
         });
       };
@@ -277,17 +331,26 @@ const TPV = () => {
                     (!search || dish.name.toLowerCase().includes(search.toLowerCase()))
                   )
                   .map((dish) => (
-                    <div key={dish.id} className="bg-white rounded-xl shadow p-4 flex flex-col items-center">
-                      <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center mb-2">
+                    <div key={dish.id} className="bg-white rounded-xl shadow flex flex-col items-stretch p-0 overflow-hidden border-2 transition-all duration-150"
+                      style={dish.customOptions && dish.customOptions.length > 0 ? { borderColor: '#f59e42' } : {}}>
+                      <div className="w-full h-28 bg-neutral-100 flex items-center justify-center">
                         {dish.image ? (
-                          <img src={dish.image} alt={dish.name} className="w-12 h-12 object-cover rounded-full" />
+                          <img src={dish.image} alt={dish.name} className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-xl font-bold text-primary-600">🍽️</span>
+                          <span className="text-3xl font-bold text-primary-600">🍽️</span>
                         )}
                       </div>
-                      <div className="font-semibold mb-1 text-center text-sm">{dish.name}</div>
-                      <div className="text-primary-600 font-bold mb-2 text-sm">€{dish.price.toFixed(2)}</div>
-                      <button className="btn-primary w-full py-1 text-sm" onClick={() => handleAdd(dish)}>Añadir</button>
+                      <div className="font-semibold mb-1 text-center text-base px-4 pt-2 flex items-center justify-center gap-2">
+                        {dish.name}
+                        {dish.customOptions && dish.customOptions.length > 0 && (
+                          <span title="Este plato tiene opciones personalizables" className="text-orange-500 text-lg">★</span>
+                        )}
+                      </div>
+                      <div className="flex justify-center w-full mb-3 px-4">
+                        <button className="btn-primary w-full py-1 text-sm" onClick={() => handleAdd(dish)}>
+                          Añadir
+                        </button>
+                      </div>
                     </div>
                   ))
               )}
@@ -297,7 +360,7 @@ const TPV = () => {
 
         {/* Columna derecha: ticket con scroll y cabecera fija */}
         <div className="flex flex-col h-full">
-          <div className="bg-white rounded-xl shadow-md p-6 mb-6 flex flex-col h-2/3 min-h-[320px] max-h-[380px] relative">
+          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8 flex flex-col h-[85%] min-h-[420px] max-h-[600px] relative text-base" style={{ fontSize: '1.08rem', minWidth: '420px', maxWidth: '520px', width: '100%' }}>
             {/* Botones de acción en la esquina superior derecha, posición absoluta */}
             <div className="absolute top-4 right-4 flex gap-2 z-10">
               <button
@@ -359,15 +422,35 @@ const TPV = () => {
                 <div className="text-neutral-400 text-center py-8">No hay productos en el ticket</div>
               ) : (
                 ticket.map((item, idx) => (
-                  <div key={item.id + '-' + idx} className="grid grid-cols-[1fr,120px,60px] items-center gap-2">
-                    <div className="font-medium text-sm truncate">{item.name}</div>
-                    <div className="flex items-center gap-1 justify-center">
-                      <button className="px-2 py-1 bg-neutral-100 rounded w-8" onClick={() => handleChangeQty(item.id, -1)}>-</button>
-                      <span className="w-8 text-center">{item.cantidad}</span>
-                      <button className="px-2 py-1 bg-neutral-100 rounded w-8" onClick={() => handleChangeQty(item.id, 1)}>+</button>
-                      <button className="ml-2 text-red-500 hover:text-red-700 w-8" onClick={() => handleRemove(item.id)}>🗑️</button>
+                  <div key={item.id + '-' + idx} className="mb-2">
+                    <div className="flex items-center justify-between gap-2 w-full">
+                      <div className="font-medium text-sm truncate flex-1 min-w-0">
+                        {item.name}
+                        {item.selectedOptions && item.selectedOptions.length > 0 && (
+                          <div className="mt-1 mb-1 pl-2 text-xs font-mono">
+                            {item.selectedOptions.map(opt => (
+                              opt.options && opt.options.length > 0 ? (
+                                <div key={opt.type} className="mb-1">
+                                  <div className="font-semibold text-orange-700">{opt.type}:</div>
+                                  <ul className="ml-3 list-none">
+                                    {opt.options.map(option => (
+                                      <li key={option} className="text-neutral-800">- {option}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button className="px-1 py-1 bg-neutral-100 rounded w-7" onClick={() => handleChangeQty(item.id, -1, item.selectedOptions)}>-</button>
+                        <span className="w-7 text-center">{item.cantidad}</span>
+                        <button className="px-1 py-1 bg-neutral-100 rounded w-7" onClick={() => handleChangeQty(item.id, 1, item.selectedOptions)}>+</button>
+                        <button className="ml-1 text-red-500 hover:text-red-700 w-7" onClick={() => handleRemove(item.id)}>🗑️</button>
+                        <div className="font-semibold text-sm text-right min-w-[60px] ml-2">€{(item.price*item.cantidad).toFixed(2)}</div>
+                      </div>
                     </div>
-                    <div className="font-semibold text-sm text-right">€{(item.price*item.cantidad).toFixed(2)}</div>
                   </div>
                 ))
               )}
@@ -409,6 +492,13 @@ const TPV = () => {
           </div>
         </div>
       </div>
+      {/* Modal para opciones de plato */}
+      <DishOptionsModal
+        dish={modalDish}
+        open={modalOpen}
+        onClose={() => { setModalOpen(false); setModalDish(null); }}
+        onConfirm={handleConfirmOptions}
+      />
     </div>
   )
 }
