@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { io } from 'socket.io-client'
 import { userProfileAPI } from '../services/api'
+import { config } from '../config'
 
 const TPV = () => {
   const socketRef = useRef(null)
@@ -68,7 +69,7 @@ const TPV = () => {
 
       useEffect(() => {
         // 1. Crear la conexión solo una vez
-        const socket = io('http://localhost:4000')
+        const socket = io(config.wsUrl)
         socketRef.current = socket
 
         // 2. Identificar usuario al conectar
