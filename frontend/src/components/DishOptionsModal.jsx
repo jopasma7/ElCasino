@@ -32,18 +32,18 @@ const DishOptionsModal = ({ dish, open, onClose, onConfirm }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
-        <button className="absolute top-2 right-2 text-2xl" onClick={onClose}>&times;</button>
-        <h2 className="text-xl font-bold mb-4">Personalizar {dish.name}</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-2">
+      <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6 w-full max-w-xs sm:max-w-md relative text-sm sm:text-base">
+        <button className="absolute top-1.5 right-2 text-xl sm:text-2xl" onClick={onClose}>&times;</button>
+        <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Personalizar {dish.name}</h2>
         {dish.customOptions?.map((group, groupIdx) => (
-          <div key={group.type} className="mb-4">
-            <div className="font-semibold mb-2">{group.type}</div>
-            <div className="flex flex-wrap gap-2">
+          <div key={group.type} className="mb-3 sm:mb-4">
+            <div className="font-semibold mb-1 sm:mb-2">{group.type}</div>
+            <div className="flex flex-wrap gap-1 sm:gap-2">
               {group.options.map(option => (
                 <button
                   key={option}
-                  className={`px-3 py-1 rounded border ${selectedOptions[groupIdx]?.includes(option) ? 'bg-primary-600 text-white' : 'bg-neutral-100'}`}
+                  className={`px-2 py-1 sm:px-3 rounded border text-xs sm:text-base ${selectedOptions[groupIdx]?.includes(option) ? 'bg-primary-600 text-white' : 'bg-neutral-100'}`}
                   onClick={() => handleOptionToggle(groupIdx, option)}
                   type="button"
                 >
@@ -53,9 +53,9 @@ const DishOptionsModal = ({ dish, open, onClose, onConfirm }) => {
             </div>
           </div>
         ))}
-        <div className="flex justify-end gap-2 mt-6">
-          <button className="btn-secondary px-4 py-2" onClick={onClose}>Cancelar</button>
-          <button className="btn-primary px-4 py-2" onClick={handleConfirm}>Añadir</button>
+        <div className="flex justify-end gap-2 mt-4 sm:mt-6">
+          <button className="btn-secondary px-3 py-1 sm:px-4 sm:py-2 text-xs sm:text-base" onClick={onClose}>Cancelar</button>
+          <button className="btn-primary px-3 py-1 sm:px-4 sm:py-2 text-xs sm:text-base" onClick={handleConfirm}>Añadir</button>
         </div>
       </div>
     </div>
