@@ -20,25 +20,32 @@ const TPV = () => {
 
       // Cambiar de mesa y cargar su ticket
       const handleMesaChange = async (num) => {
-        setMesa(num)
+        // Salir de la room anterior y unirse a la nueva
+        if (socketRef.current) {
+          if (mesa !== num) {
+            socketRef.current.emit('leaveMesa', mesa); // salir de la mesa actual
+            socketRef.current.emit('joinMesa', num);   // unirse a la nueva mesa
+          }
+        }
+        setMesa(num);
         // Leer ticket desde backend
         try {
-          const res = await ticketsAPI.getTicket(num)
+          const res = await ticketsAPI.getTicket(num);
           if (res.data) {
-            setTicketName(res.data.name)
+            setTicketName(res.data.name);
             setTicket(res.data.items.map(item => ({
               id: item.dishId,
               name: item.dish.name,
               price: item.price,
               cantidad: item.cantidad
-            })))
+            })));
           } else {
-            setTicket([])
-            setTicketName(`Ticket Mesa ${num}`)
+            setTicket([]);
+            setTicketName(`Ticket Mesa ${num}`);
           }
         } catch {
-          setTicket([])
-          setTicketName(`Ticket Mesa ${num}`)
+          setTicket([]);
+          setTicketName(`Ticket Mesa ${num}`);
         }
       }
 
@@ -68,11 +75,11 @@ const TPV = () => {
       }, []);
 
       useEffect(() => {
-        // 1. Crear la conexión solo una vez
+        // Solo crear la conexión una vez
         const socket = io(config.wsUrl)
         socketRef.current = socket
+        socket.emit('joinMesa', mesa);
 
-        // 2. Identificar usuario al conectar
         const fetchAndIdentify = async () => {
           try {
             const res = await userProfileAPI.getMe()
@@ -84,7 +91,16 @@ const TPV = () => {
         }
         fetchAndIdentify()
 
-        // 3. Escuchar ticket actualizado
+        // Cleanup global
+        return () => {
+          socket.disconnect();
+        }
+      }, [])
+
+      // Listener dependiente de mesa
+      useEffect(() => {
+        const socket = socketRef.current;
+        if (!socket) return;
         const ticketUpdatedHandler = async (data) => {
           if (data.mesa === mesa) {
             try {
@@ -108,13 +124,10 @@ const TPV = () => {
           }
         };
         socket.on('ticketUpdated', ticketUpdatedHandler);
-
-        // 4. Cleanup: cerrar conexión al desmontar
         return () => {
           socket.off('ticketUpdated', ticketUpdatedHandler);
-          socket.disconnect();
         }
-      }, [])
+      }, [mesa])
 
       // Emitir ticket actualizado al backend y guardar en DB
       const [isUpdating, setIsUpdating] = useState(false);
@@ -127,11 +140,7 @@ const TPV = () => {
         }
         setIsUpdating(true);
         try {
-          socketRef.current.emit('updateTicket', {
-            mesa: data.mesa,
-            ticket: data.ticket,
-            ticketName: data.ticketName
-          });
+          // Primero guardar en backend
           const payload = {
             name: data.ticketName,
             items: data.ticket.map(item => ({
@@ -141,6 +150,12 @@ const TPV = () => {
             }))
           };
           await ticketsAPI.updateTicket(data.mesa, payload);
+          // Emitir evento solo después de guardar
+          socketRef.current.emit('updateTicket', {
+            mesa: data.mesa,
+            ticket: data.ticket,
+            ticketName: data.ticketName
+          });
           toast.success('Ticket enviado correctamente', { position: 'top-right' });
         } catch (e) {
           toast.error('Error al enviar el ticket', { position: 'top-right' });

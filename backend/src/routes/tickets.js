@@ -50,6 +50,11 @@ router.post('/:mesa', async (req, res) => {
       where: { id: ticket.id },
       include: { items: { include: { dish: true } } }
     });
+    // Emitir evento WebSocket después de actualizar el ticket
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`mesa-${mesa}`).emit('ticketUpdated', updated);
+    }
     res.json(updated);
   } catch (e) {
     res.status(500).json({ error: 'Error al actualizar ticket', details: e.message });

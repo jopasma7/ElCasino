@@ -51,6 +51,8 @@ const io = new SocketIOServer(server, {
     credentials: true
   }
 })
+// Hacer io accesible en req.app
+app.set('io', io);
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -116,9 +118,21 @@ io.on('connection', (socket) => {
     console.log(`🟢 Usuario conectado por WebSocket: ${socket.id} (${username})`);
   });
 
-  // Recibe actualización de ticket y la reenvía a todos
+  // Unirse a la room de la mesa
+  socket.on('joinMesa', (mesa) => {
+    socket.join(`mesa-${mesa}`);
+    // console.log(`Socket ${socket.id} se une a mesa-${mesa}`);
+  });
+
+  // Salir de la room de la mesa anterior
+  socket.on('leaveMesa', (mesa) => {
+    socket.leave(`mesa-${mesa}`);
+    // console.log(`Socket ${socket.id} sale de mesa-${mesa}`);
+  });
+
+  // Recibe actualización de ticket y la reenvía solo a la mesa
   socket.on('updateTicket', (data) => {
-    io.emit('ticketUpdated', data);
+    io.to(`mesa-${data.mesa}`).emit('ticketUpdated', data);
   });
 
   socket.on('disconnect', () => {
