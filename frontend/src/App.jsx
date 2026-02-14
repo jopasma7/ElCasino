@@ -15,7 +15,7 @@ import Members from './pages/Members'
 import { useEffect } from 'react';
 function AppLayout() {
   const location = useLocation();
-  const hideFooter = location.pathname === '/tpv';
+  const hideFooter = location.pathname === '/tpv' || location.pathname === '/menu-del-dia';
 
   // Scroll to top on route change
   useEffect(() => {

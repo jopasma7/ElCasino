@@ -49,6 +49,9 @@ router.delete('/:id', async (req, res) => {
     await prisma.category.delete({ where: { id } });
     res.json({ message: 'Categoría eliminada' });
   } catch (error) {
+    if (error.code === 'P2003' || (error.message && error.message.includes('Foreign key constraint')) ) {
+      return res.status(400).json({ error: 'No se puede eliminar una categoría que contiene platos. Elimina o reasigna los platos primero.' });
+    }
     res.status(500).json({ error: 'Error al eliminar categoría' });
   }
 

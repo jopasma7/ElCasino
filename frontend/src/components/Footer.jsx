@@ -8,8 +8,8 @@ const Footer = () => {
   return (
     <footer className="bg-neutral-900 text-neutral-300">
       {/* Main Footer */}
-      <div className="container mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-6">
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
@@ -133,12 +133,6 @@ const Footer = () => {
               >
                 Pedir Ahora
               </Link>
-              <Link
-                to="/admin"
-                className="text-xs text-neutral-500 hover:text-neutral-400 transition-colors"
-              >
-                Acceso de Administración
-              </Link>
             </div>
           )}
         </div>
@@ -147,7 +141,7 @@ const Footer = () => {
         <div className="border-t border-neutral-800"></div>
 
         {/* Bottom */}
-        <div className="py-8 text-center text-sm text-neutral-400">
+        <div className="py-4 text-center text-sm text-neutral-400">
           <p className="flex items-center justify-center gap-2 mb-3">
             Hecho con <Heart className="w-4 h-4 text-primary-500 fill-primary-500" /> en Benilloba
           </p>

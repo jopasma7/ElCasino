@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { VERSION } from '../version';
 import { toast } from 'react-toastify'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
@@ -60,7 +61,8 @@ const Admin = () => {
   return (
     <div className="py-12 bg-neutral-50 min-h-screen">
       <div className="container mx-auto px-4">
-        <div className="mb-8 flex items-center">
+
+        <div className="mb-8 flex items-center justify-between flex-wrap gap-2">
           <div>
             <h1 className="text-4xl font-display font-bold text-neutral-900 mb-2">
               Panel de Administración
@@ -68,6 +70,10 @@ const Admin = () => {
             <p className="text-neutral-600">
               Gestiona el contenido de tu restaurante
             </p>
+          </div>
+          <div className="hidden md:block text-sm text-neutral-400 font-mono mt-2 md:mt-0 text-right">
+            <div className="mb-1">Desarrollador: Alejandro Pastor</div>
+            Versión {VERSION}
           </div>
         </div>
 
@@ -222,7 +228,7 @@ const DishesManager = () => {
       name: dish.name,
       description: dish.description,
       price: dish.price.toString(),
-      category: dish.category,
+      category: dish.categoryId, // Usar el id de la categoría
       available: dish.available,
       image: null
     })
@@ -233,6 +239,12 @@ const DishesManager = () => {
   const handleCreate = async (e) => {
     e.preventDefault()
     setSubmitting(true)
+    // Validar que la categoría sea válida
+    if (!formData.category || formData.category === 'all') {
+      toast.error('Selecciona una categoría válida para el plato.')
+      setSubmitting(false)
+      return
+    }
     try {
       const payload = new FormData()
       payload.append('name', formData.name)
@@ -304,17 +316,46 @@ const DishesManager = () => {
   }
 
   const handleDeleteCategory = async (cat) => {
-    if (cat.id === 'all') return
-    const confirm = window.confirm(`¿Seguro que quieres eliminar la categoría "${cat.label}"?`)
-    if (!confirm) return
+    if (cat.id === 'all') return;
+    const result = await MySwal.fire({
+      title: <span style={{color:'#a66a06',fontWeight:'bold'}}>¿Eliminar categoría?</span>,
+      html: `<div style="color:#444">¿Seguro que quieres eliminar la categoría <b>${cat.label}</b>?<br><b>Esta acción no se puede deshacer.</b></div>`,
+      icon: 'warning',
+      showCancelButton: true,
+      focusCancel: true,
+      confirmButtonColor: '#a66a06',
+      cancelButtonColor: '#d33',
+      confirmButtonText: '<b>Eliminar</b>',
+      cancelButtonText: 'Cancelar',
+      customClass: {
+        popup: 'swal2-rounded swal2-shadow',
+        confirmButton: 'swal2-confirm-custom',
+        cancelButton: 'swal2-cancel-custom'
+      },
+      buttonsStyling: false
+    });
+    if (!result.isConfirmed) return;
     try {
-      await categoriesAPI.delete(cat.id)
-      setCategories(categories.filter(c => c.id !== cat.id))
-      toast.success('Categoría eliminada')
+      await categoriesAPI.delete(cat.id);
+      setCategories(categories.filter(c => c.id !== cat.id));
+      toast.success('Categoría eliminada');
       // Si la categoría eliminada estaba seleccionada, volver a 'all'
-      if (selectedCategory === cat.id) setSelectedCategory('all')
+      if (selectedCategory === cat.id) setSelectedCategory('all');
     } catch (e) {
-      toast.error('Error al eliminar categoría')
+      if (e.response && e.response.data && e.response.data.error) {
+        const msg = e.response.data.error;
+        if (
+          msg.includes('Foreign key constraint') ||
+          msg.includes('violates foreign key') ||
+          msg.includes('No se puede eliminar una categoría que contiene platos')
+        ) {
+          toast.error('No se puede eliminar una categoría que contiene platos. Elimina o reasigna los platos primero.');
+        } else {
+          toast.error('Error al eliminar categoría');
+        }
+      } else {
+        toast.error('Error al eliminar categoría');
+      }
     }
   }
 
@@ -331,11 +372,11 @@ const DishesManager = () => {
 
   const filteredDishes = selectedCategory === 'all' 
     ? dishes 
-    : dishes.filter(d => d.category === selectedCategory)
+    : dishes.filter(d => d.categoryId === selectedCategory)
 
-  const getDishCountByCategory = (category) => {
-    if (category === 'all') return dishes.length
-    return dishes.filter(d => d.category === category).length
+  const getDishCountByCategory = (categoryId) => {
+    if (categoryId === 'all') return dishes.length
+    return dishes.filter(d => d.categoryId === categoryId).length
   }
 
   return (
@@ -547,14 +588,15 @@ const DishesManager = () => {
           {selectedCategory === 'all' ? 'No hay platos. Añade el primero.' : `No hay platos en la categoría ${categories.find(c => c.value === selectedCategory)?.label}.`}
         </p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid gap-4 justify-center" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 260px))' }}>
           {filteredDishes.map((dish) => (
             <div
               key={dish.id}
-              className="border border-neutral-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+              className="border border-neutral-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow mx-auto"
+              style={{ width: '100%', maxWidth: '260px' }}
             >
               {/* Imagen del plato */}
-              <div className="relative h-48 bg-neutral-100">
+              <div className="relative h-32 bg-neutral-100">
                 <DishImage src={dish.image} name={dish.name} />
                 {!dish.available && (
                   <div className="absolute top-2 left-2 px-2 py-1 bg-red-600 text-white text-xs font-medium rounded">
@@ -567,14 +609,14 @@ const DishesManager = () => {
               </div>
 
               {/* Contenido de la card */}
-              <div className="p-4">
+              <div className="p-3" style={{ minHeight: '80px', maxHeight: '110px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <h3 className="font-semibold text-neutral-900 mb-1 line-clamp-1">{dish.name}</h3>
-                <p className="text-sm text-neutral-600 mb-3 line-clamp-2">{dish.description}</p>
+                <p className="text-xs text-neutral-600 mb-2 line-clamp-2" style={{ maxHeight: '32px', overflow: 'hidden' }}>{dish.description}</p>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleToggleAvailability(dish)}
-                    className="flex-1 px-3 py-2 text-sm rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 px-2 py-1 text-xs rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors flex items-center justify-center gap-1"
                     title={dish.available ? 'Ocultar de la carta' : 'Mostrar en la carta'}
                   >
                     {dish.available ? (
@@ -585,14 +627,14 @@ const DishesManager = () => {
                   </button>
                   <button 
                     onClick={() => handleEdit(dish)}
-                    className="p-2 rounded-lg bg-primary-100 hover:bg-primary-200 transition-colors"
+                    className="p-1 rounded-lg bg-primary-100 hover:bg-primary-200 transition-colors"
                     title="Editar plato"
                   >
                     <Edit className="w-4 h-4 text-primary-600" />
                   </button>
                   <button 
                     onClick={() => handleDelete(dish.id)}
-                    className="p-2 rounded-lg bg-red-100 hover:bg-red-200 transition-colors"
+                    className="p-1 rounded-lg bg-red-100 hover:bg-red-200 transition-colors"
                     title="Eliminar plato"
                   >
                     <Trash2 className="w-4 h-4 text-red-600" />

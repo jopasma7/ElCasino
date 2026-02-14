@@ -58,8 +58,7 @@ router.get('/:id', async (req, res) => {
     body('name').notEmpty().withMessage('El nombre es requerido'),
     body('description').notEmpty().withMessage('La descripción es requerida'),
     body('price').isFloat({ min: 0 }).withMessage('El precio debe ser mayor a 0'),
-    body('category').isIn(['entrantes', 'primeros', 'segundos', 'postres', 'bebidas'])
-      .withMessage('Categoría inválida')
+    body('category').notEmpty().withMessage('La categoría es requerida')
   ],
   async (req, res) => {
     try {
@@ -75,7 +74,7 @@ router.get('/:id', async (req, res) => {
         contentType: req.headers['content-type']
       })
 
-      const { name, description, price, category, available } = req.body
+      const { name, description, price, categoryId, available } = req.body
       let image = null
       
       // Si hay un archivo subido, usar la ruta local
@@ -96,7 +95,7 @@ router.get('/:id', async (req, res) => {
           name,
           description,
           price: parseFloat(price),
-          category,
+          categoryId,
           image,
           available: available !== undefined ? (typeof available === 'boolean' ? available : available === 'true') : true
         }
@@ -112,7 +111,7 @@ router.get('/:id', async (req, res) => {
 // PUT - Actualizar plato (requiere autenticación)
 router.put('/:id', adminAuthMiddleware, upload.single('image'), async (req, res) => {
   try {
-    const { name, description, price, category, available } = req.body;
+    const { name, description, price, categoryId, available } = req.body;
     let image = undefined;
 
     // Si hay un archivo subido, usar la ruta local
@@ -128,7 +127,7 @@ router.put('/:id', adminAuthMiddleware, upload.single('image'), async (req, res)
       ...(name && { name }),
       ...(description && { description }),
       ...(price && { price: parseFloat(price) }),
-      ...(category && { category }),
+      ...(categoryId && { categoryId }),
       ...(available !== undefined && { available: available === 'true' }),
       ...(image !== undefined && { image })
     };
