@@ -10,8 +10,12 @@ import { userProfileAPI } from '../services/api'
 import { config } from '../config'
 
 const TPV = () => {
+    // Estado para expandir el ticket
+    const [ticketExpand, setTicketExpand] = useState(false);
   const socketRef = useRef(null)
   const [cobroOpen, setCobroOpen] = useState(false);
+  // Estado para colapsar/expandir todos los platos
+  const [platosOpen, setPlatosOpen] = useState(true);
       const [mesa, setMesa] = useState(1)
       const [ticket, setTicket] = useState([])
       const [ticketsPorMesa, setTicketsPorMesa] = useState(Array(10).fill([]))
@@ -271,6 +275,11 @@ const TPV = () => {
         ])
         setDishes(dishRes.data)
         setCategories(catRes.data)
+        // Seleccionar la categoría 'Cafés' por defecto si existe
+        const cafesCat = catRes.data.find(cat => cat.name.toLowerCase() === 'cafés');
+        if (cafesCat) {
+          setSelectedCategory(cafesCat.id);
+        }
       } catch (e) {
         setDishes([])
         setCategories([])
@@ -294,75 +303,176 @@ const TPV = () => {
           {/* Botones de acción eliminados, ahora solo están en la tarjeta de ticket */}
       </div>
 
+      {/* Botón para colapsar/expandir todos los platos y filtro de mesa */}
+      <div className="mb-4 flex items-center gap-4">
+        <button
+          className="btn-primary px-6 py-2 text-lg"
+          onClick={() => setPlatosOpen(v => !v)}
+        >
+          {platosOpen ? 'Ocultar platos' : 'Mostrar platos'}
+        </button>
+        <select className="input-field w-32" value={mesa} onChange={e => handleMesaChange(Number(e.target.value))}>
+          {Array.from({length: 10}, (_, i) => (
+            <option key={i+1} value={i+1}>Mesa {i+1}</option>
+          ))}
+        </select>
+      </div>
       {/* Zona central mejorada */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 h-[70vh]">
+      <div className={`grid ${platosOpen ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1'} gap-8 h-[70vh]`}>
         {/* Columna izquierda: productos */}
-        <div className="md:col-span-2 flex flex-col h-full">
-          {/* Buscador y filtros */}
-          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
-            <input
-              type="text"
-              placeholder="Buscar producto o plato..."
-              className="input-field flex-1"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-            <select className="input-field w-32" value={mesa} onChange={e => handleMesaChange(Number(e.target.value))}>
-              {Array.from({length: 10}, (_, i) => (
-                <option key={i+1} value={i+1}>Mesa {i+1}</option>
-              ))}
-            </select>
-            <select className="input-field w-56" value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)}>
-              <option value="">Todas las categorías</option>
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
-          </div>
-          {/* Listado de productos con scroll */}
-          <div className="flex-1 overflow-y-auto pr-1">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {loadingProducts ? (
-                <div className="col-span-full text-center py-8">Cargando productos...</div>
-              ) : (
-                dishes
-                  .filter(dish =>
-                    (!selectedCategory || dish.categoryId === selectedCategory) &&
-                    (!search || dish.name.toLowerCase().includes(search.toLowerCase()))
-                  )
-                  .map((dish) => (
-                    <div key={dish.id} className="bg-white rounded-xl shadow flex flex-col items-stretch p-0 overflow-hidden border-2 transition-all duration-150"
-                      style={dish.customOptions && dish.customOptions.length > 0 ? { borderColor: '#f59e42' } : {}}>
-                      <div className="w-full h-28 bg-neutral-100 flex items-center justify-center">
-                        {dish.image ? (
-                          <img src={dish.image} alt={dish.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-3xl font-bold text-primary-600">🍽️</span>
-                        )}
+        {platosOpen && (
+          <div className="md:col-span-2 flex flex-col h-full">
+            {/* Filtros de búsqueda y categoría dentro del panel colapsable */}
+            <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+              <input
+                type="text"
+                placeholder="Buscar producto o plato..."
+                className="input-field flex-1"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              <select className="input-field w-56" value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)}>
+                <option value="">Todas las categorías</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+            {/* Listado de productos colapsable */}
+            <div className="flex-1 overflow-y-auto pr-1">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {loadingProducts ? (
+                  <div className="col-span-full text-center py-8">Cargando productos...</div>
+                ) : (
+                  dishes
+                    .filter(dish =>
+                      (!selectedCategory || dish.categoryId === selectedCategory) &&
+                      (!search || dish.name.toLowerCase().includes(search.toLowerCase()))
+                    )
+                    .map((dish) => (
+                      <div key={dish.id} className="bg-white rounded-xl shadow flex flex-col items-stretch p-0 overflow-hidden border-2 transition-all duration-150"
+                        style={dish.customOptions && dish.customOptions.length > 0 ? { borderColor: '#f59e42' } : {}}>
+                        <div className="w-full h-28 bg-neutral-100 flex items-center justify-center">
+                          {dish.image ? (
+                            <img src={dish.image} alt={dish.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-3xl font-bold text-primary-600">🍽️</span>
+                          )}
+                        </div>
+                        <div className="font-semibold mb-1 text-center text-base px-4 pt-2 flex items-center justify-center gap-2">
+                          {dish.name}
+                          {dish.customOptions && dish.customOptions.length > 0 && (
+                            <span title="Este plato tiene opciones personalizables" className="text-orange-500 text-lg">★</span>
+                          )}
+                        </div>
+                        <div className="flex justify-center w-full mb-3 px-4">
+                          <button className="btn-primary w-full py-1 text-sm" onClick={() => handleAdd(dish)}>
+                            Añadir
+                          </button>
+                        </div>
                       </div>
-                      <div className="font-semibold mb-1 text-center text-base px-4 pt-2 flex items-center justify-center gap-2">
-                        {dish.name}
-                        {dish.customOptions && dish.customOptions.length > 0 && (
-                          <span title="Este plato tiene opciones personalizables" className="text-orange-500 text-lg">★</span>
-                        )}
-                      </div>
-                      <div className="flex justify-center w-full mb-3 px-4">
-                        <button className="btn-primary w-full py-1 text-sm" onClick={() => handleAdd(dish)}>
-                          Añadir
-                        </button>
-                      </div>
-                    </div>
-                  ))
-              )}
+                    ))
+                )}
+              </div>
             </div>
           </div>
-        </div>
-
+        )}
         {/* Columna derecha: ticket con scroll y cabecera fija */}
         <div className="flex flex-col h-full">
-          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8 flex flex-col h-[85%] min-h-[420px] max-h-[600px] relative text-base" style={{ fontSize: '1.08rem', minWidth: '420px', maxWidth: '520px', width: '100%' }}>
+          <div
+  className={`bg-white rounded-2xl shadow-lg p-8 mb-8 flex flex-col relative text-base w-full ${platosOpen ? 'max-w-[520px] min-w-[420px] max-h-[600px] h-[85%]' : ''}`}
+  style={{ fontSize: '1.08rem' }}
+>
             {/* Botones de acción en la esquina superior derecha, posición absoluta */}
             <div className="absolute top-4 right-4 flex gap-2 z-10">
+              <button
+                className="rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg w-10 h-10 flex items-center justify-center text-lg transition-all duration-200"
+                onClick={() => setTicketExpand(true)}
+                title="Expandir ticket"
+              >
+                <span role="img" aria-label="Expandir">⤢</span>
+              </button>
+                    {/* Modal para ticket expandido */}
+                    {ticketExpand && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 pt-36 pb-12">
+                        <div className="bg-white rounded-2xl shadow-2xl p-10 flex flex-col w-[80vw] max-w-[700px] h-[70vh] max-h-[700px] relative text-base">
+                          <button
+                            className="absolute top-4 right-4 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg w-10 h-10 flex items-center justify-center text-lg transition-all duration-200"
+                            onClick={() => setTicketExpand(false)}
+                            title="Cerrar ticket expandido"
+                          >
+                            <span role="img" aria-label="Cerrar">✖️</span>
+                          </button>
+                          {/* Copia del contenido del ticket, puedes reutilizar el mismo fragmento que tienes en el ticket normal */}
+                          <div className="flex items-center mb-4 flex-shrink-0 gap-2">
+                            {editingName ? (
+                              <input
+                                className="input-field text-base font-semibold mr-2 py-1 px-2 w-36"
+                                value={ticketName}
+                                onChange={e => setTicketName(e.target.value)}
+                                onBlur={() => setEditingName(false)}
+                                autoFocus
+                                style={{ maxWidth: '9rem' }}
+                              />
+                            ) : (
+                              <h2 className="text-xl font-bold mr-2">{ticketName}</h2>
+                            )}
+                            <button
+                              className="text-neutral-500 hover:text-primary-600 text-xl p-1"
+                              onClick={() => setEditingName(true)}
+                              title="Editar nombre del ticket"
+                              style={{ lineHeight: 1 }}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6">
+                                <path d="M15.232 5.232a2.5 2.5 0 0 1 0 3.536l-7.5 7.5A2.5 2.5 0 0 1 6.5 17H3a1 1 0 0 1-1-1v-3.5a2.5 2.5 0 0 1 .732-1.768l7.5-7.5a2.5 2.5 0 0 1 3.536 0zm-9.464 9.464a.5.5 0 0 0 .354.146H6.5v-1.232a.5.5 0 0 0-.146-.354l-1.232-1.232a.5.5 0 0 0-.354-.146H3.5v1.232a.5.5 0 0 0 .146.354l1.232 1.232z" />
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1">
+                            {ticket.length === 0 ? (
+                              <div className="text-neutral-400 text-center py-8">No hay productos en el ticket</div>
+                            ) : (
+                              ticket.map((item, idx) => (
+                                <div key={item.id + '-' + idx} className="mb-2">
+                                  <div className="flex items-center justify-between gap-2 w-full">
+                                    <div className="font-medium text-sm truncate flex-1 min-w-0">
+                                      {item.name}
+                                      {item.selectedOptions && item.selectedOptions.length > 0 && (
+                                        <div className="mt-1 mb-1 pl-2 text-xs font-mono">
+                                          {item.selectedOptions.map(opt => (
+                                            opt.options && opt.options.length > 0 ? (
+                                              <div key={opt.type} className="mb-1">
+                                                <div className="font-semibold text-orange-700">{opt.type}:</div>
+                                                <ul className="ml-3 list-none">
+                                                  {opt.options.map(option => (
+                                                    <li key={option} className="text-neutral-800">- {option}</li>
+                                                  ))}
+                                                </ul>
+                                              </div>
+                                            ) : null
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                      <button className="px-1 py-1 bg-neutral-100 rounded w-7" onClick={() => handleChangeQty(item.id, -1, item.selectedOptions)}>-</button>
+                                      <span className="w-7 text-center">{item.cantidad}</span>
+                                      <button className="px-1 py-1 bg-neutral-100 rounded w-7" onClick={() => handleChangeQty(item.id, 1, item.selectedOptions)}>+</button>
+                                      <button className="ml-1 text-red-500 hover:text-red-700 w-7" onClick={() => handleRemove(item.id)}>🗑️</button>
+                                      <div className="font-semibold text-sm text-right min-w-[60px] ml-2">€{(item.price*item.cantidad).toFixed(2)}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                          <div className="border-t pt-3 mt-3 flex justify-between text-lg font-bold flex-shrink-0">
+                            <span>Total:</span>
+                            <span className="text-primary-600">€{total.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
               <button
                 className="rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-lg w-10 h-10 flex items-center justify-center text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={async () => {
@@ -462,7 +572,7 @@ const TPV = () => {
             {/* ...el botón ahora está en la cabecera */}
           </div>
           {/* Cobro - Panel colapsable */}
-          <div className="bg-white rounded-xl shadow-md flex-shrink-0">
+          <div className="bg-white rounded-xl shadow-md flex-shrink-0 w-full">
             <button
               className="w-full flex items-center justify-between px-6 py-4 focus:outline-none"
               onClick={() => setCobroOpen(v => !v)}
