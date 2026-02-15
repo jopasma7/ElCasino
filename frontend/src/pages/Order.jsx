@@ -19,15 +19,15 @@ const Order = () => {
   
   // Selecciones del menú completo (2 platos)
   const [menuSelections, setMenuSelections] = useState({
-    starter: '',
-    main: '',
-    dessert: ''
+    starter: '', // id
+    main: '',    // id
+    dessert: ''  // id
   })
   
   // Selección del menú completo (1 plato)
   const [completeSingleSelection, setCompleteSingleSelection] = useState({
-    dish: '',
-    dessert: ''
+    dish: '',    // id
+    dessert: ''  // id
   })
 
 
@@ -42,7 +42,7 @@ const Order = () => {
       const response = await dishesAPI.getAll()
       setDishes(response.data)
     } catch (error) {
-      console.error('Error al cargar platos:', error)
+      // ...existing code...
       setDishes([])
     }
   }
@@ -52,7 +52,7 @@ const Order = () => {
       const response = await dailyMenuAPI.getToday()
       setDailyMenu(response.data)
     } catch (error) {
-      console.error('Error al cargar menú del día:', error)
+      // ...existing code...
       setDailyMenu(null)
     } finally {
       setLoading(false)
@@ -71,7 +71,7 @@ const Order = () => {
         notes: ''
       })
     } catch (error) {
-      console.error('Error al cargar perfil:', error)
+      // ...existing code...
     }
   }
 
@@ -85,21 +85,7 @@ const Order = () => {
       toast.error('Por favor, selecciona un primero, un segundo y un postre')
       return
     }
-    // Buscar los dishId por nombre normalizado
-    const starterDish = dishes.find(d => normalize(d.name) === normalize(menuSelections.starter))
-    const mainDish = dishes.find(d => normalize(d.name) === normalize(menuSelections.main))
-    const dessertDish = dishes.find(d => normalize(d.name) === normalize(menuSelections.dessert))
-    if (!starterDish || !mainDish || !dessertDish) {
-      toast.error('No se pudo encontrar el plato seleccionado. Intenta recargar la página.')
-      console.log('Platos cargados:', dishes.map(d => d.name));
-      console.log('Seleccionados:', menuSelections);
-      return
-    }
-    const menuItems = [
-      { dishId: starterDish.id, quantity: 1, price: starterDish.price },
-      { dishId: mainDish.id, quantity: 1, price: mainDish.price },
-      { dishId: dessertDish.id, quantity: 1, price: dessertDish.price }
-    ]
+    // Permitir añadir aunque no exista en dishes
     setCart([...cart, {
       menuType: 'complete',
       name: 'Menú Completo',
@@ -110,7 +96,11 @@ const Order = () => {
         main: menuSelections.main,
         dessert: menuSelections.dessert
       },
-      menuItems
+      menuItems: [
+        { dishName: menuSelections.starter, quantity: 1, price: 0 },
+        { dishName: menuSelections.main, quantity: 1, price: 0 },
+        { dishName: menuSelections.dessert, quantity: 1, price: 0 }
+      ]
     }])
     setMenuSelections({ starter: '', main: '', dessert: '' })
   }
@@ -120,18 +110,7 @@ const Order = () => {
       toast.error('Por favor, selecciona un plato y un postre')
       return
     }
-    const dishObj = dishes.find(d => normalize(d.name) === normalize(completeSingleSelection.dish))
-    const dessertObj = dishes.find(d => normalize(d.name) === normalize(completeSingleSelection.dessert))
-    if (!dishObj || !dessertObj) {
-      toast.error('No se pudo encontrar el plato seleccionado. Intenta recargar la página.')
-      console.log('Platos cargados:', dishes.map(d => d.name));
-      console.log('Seleccionados:', completeSingleSelection);
-      return
-    }
-    const menuItems = [
-      { dishId: dishObj.id, quantity: 1, price: dishObj.price },
-      { dishId: dessertObj.id, quantity: 1, price: dessertObj.price }
-    ]
+    // Permitir añadir aunque no exista en dishes
     setCart([...cart, {
       menuType: 'complete-single',
       name: 'Menú Completo (1 Plato)',
@@ -141,7 +120,10 @@ const Order = () => {
         dish: completeSingleSelection.dish,
         dessert: completeSingleSelection.dessert
       },
-      menuItems
+      menuItems: [
+        { dishName: completeSingleSelection.dish, quantity: 1, price: 0 },
+        { dishName: completeSingleSelection.dessert, quantity: 1, price: 0 }
+      ]
     }])
     setCompleteSingleSelection({ dish: '', dessert: '' })
   }
@@ -183,32 +165,44 @@ const Order = () => {
     try {
       setSubmitting(true)
       
-      // Construir items con dishId para el backend
-      let items = []
-      cart.forEach(item => {
+      // Construir items para el backend: dishId si existe, dishName si no, y menuGroup para agrupación
+      let items = [];
+      cart.forEach((item, menuIdx) => {
         if (item.menuItems) {
           item.menuItems.forEach(mi => {
-            items.push({
-              dishId: mi.dishId,
-              quantity: mi.quantity,
-              price: mi.price
-            })
-          })
+            if (typeof mi.dishId === 'string' || typeof mi.dishId === 'number') {
+              items.push({
+                dishId: mi.dishId,
+                quantity: mi.quantity,
+                price: mi.price,
+                menuGroup: menuIdx
+              });
+            } else if (mi.dishName) {
+              items.push({
+                dishId: null,
+                dishName: mi.dishName,
+                quantity: mi.quantity,
+                price: 0,
+                menuGroup: menuIdx
+              });
+            }
+          });
         }
-      })
+      });
       const orderData = {
         type: orderType,
         customerName: customerInfo.name,
         customerPhone: customerInfo.phone,
         notes: customerInfo.notes || null,
         items,
-        isDailyMenu: true
+        isDailyMenu: true,
+        total: getTotalPrice()
       }
 
       await ordersAPI.create(orderData)
       setOrderPlaced(true)
     } catch (error) {
-      console.error('Error al realizar pedido:', error)
+      // ...existing code...
       toast.error('Error al realizar el pedido. Inténtalo de nuevo.')
     } finally {
       setSubmitting(false)
@@ -259,12 +253,20 @@ const Order = () => {
         </p>
       </div>
 
+      {(() => {
+        // LOGS para depuración de dailyMenu y dishes
+        if (!loading) {
+          // ...existing code...
+          // ...existing code...
+        }
+        return null;
+      })()}
       {loading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           <p className="mt-4 text-neutral-600">Cargando menú del día...</p>
         </div>
-      ) : dailyMenu ? (
+        ) : (dailyMenu && Array.isArray(dailyMenu.starters) && dailyMenu.starters.length > 0 && Array.isArray(dailyMenu.mains) && dailyMenu.mains.length > 0 && Array.isArray(dailyMenu.desserts) && dailyMenu.desserts.length > 0) ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
             {/* Menu Options */}
             <div className="lg:col-span-2 space-y-4 md:space-y-6">
@@ -310,8 +312,8 @@ const Order = () => {
                         >
                           <option value="">Selecciona...</option>
                           {Array.isArray(dailyMenu.starters)
-                            ? dailyMenu.starters.map((starter, idx) => (
-                                <option key={idx} value={starter}>{starter}</option>
+                            ? dailyMenu.starters.map((starter) => (
+                                <option key={starter} value={starter}>{starter}</option>
                               ))
                             : <option disabled value="">No hay primeros disponibles</option>
                           }

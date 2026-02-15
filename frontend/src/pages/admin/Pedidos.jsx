@@ -129,21 +129,70 @@ const Pedidos = () => {
                 <div className="bg-neutral-50 rounded-xl p-4 border border-neutral-100 md:col-span-2">
                   <h4 className="font-semibold mb-2">Detalle</h4>
                   <div className="space-y-2">
-                    {order.items.map((item) => (
-                      <div key={item.id} className="flex justify-between text-sm text-neutral-700">
-                        <span>{item.quantity} × {item.dish?.name || 'Plato eliminado'}</span>
-                        <span>€{(item.price * item.quantity).toFixed(2)}</span>
-                      </div>
-                    ))}
+                    {order.isDailyMenu ? (
+                      (() => {
+                        // Agrupar por menuGroup
+                        // Agrupar y ordenar por menuGroup
+                        const groups = {};
+                        for (const item of order.items) {
+                          const group = item.menuGroup ?? 'no-group';
+                          if (!groups[group]) groups[group] = [];
+                          groups[group].push(item);
+                        }
+                        // Ordenar los grupos por menuGroup numérico
+                        const sortedGroups = Object.keys(groups)
+                          .sort((a, b) => Number(a) - Number(b))
+                          .map((key) => groups[key]);
+                        return sortedGroups.map((groupItems, idx) => {
+                          if (groupItems.length === 3) {
+                            return (
+                              <div key={idx} className="border rounded-lg p-3 bg-white mb-2">
+                                <div className="font-semibold text-primary-700 mb-1">Menú Completo</div>
+                                <ul className="ml-2 text-sm text-neutral-700 list-disc">
+                                  <li><b>Primero:</b> {groupItems[0]?.dishName || groupItems[0]?.dish?.name}</li>
+                                  <li><b>Segundo:</b> {groupItems[1]?.dishName || groupItems[1]?.dish?.name}</li>
+                                  <li><b>Postre:</b> {groupItems[2]?.dishName || groupItems[2]?.dish?.name}</li>
+                                </ul>
+                              </div>
+                            );
+                          } else if (groupItems.length === 2) {
+                            return (
+                              <div key={idx} className="border rounded-lg p-3 bg-white mb-2">
+                                <div className="font-semibold text-primary-700 mb-1">Menú Completo (1 Plato)</div>
+                                <ul className="ml-2 text-sm text-neutral-700 list-disc">
+                                  <li><b>Plato:</b> {groupItems[0]?.dishName || groupItems[0]?.dish?.name}</li>
+                                  <li><b>Postre:</b> {groupItems[1]?.dishName || groupItems[1]?.dish?.name}</li>
+                                </ul>
+                              </div>
+                            );
+                          } else {
+                            // Fallback para items sueltos
+                            return (
+                              <div key={groupItems[0].id || idx} className="flex justify-between text-sm text-neutral-700">
+                                <span>{groupItems[0].quantity} × {groupItems[0].dish?.name || groupItems[0].dishName || 'Plato eliminado'}</span>
+                                {groupItems[0].price > 0 && (
+                                  <span>€{(groupItems[0].price * groupItems[0].quantity).toFixed(2)}</span>
+                                )}
+                              </div>
+                            );
+                          }
+                        });
+                      })()
+                    ) : (
+                      order.items.map((item) => (
+                        <div key={item.id} className="flex justify-between text-sm text-neutral-700">
+                          <span>{item.quantity} × {item.dish?.name || item.dishName || 'Plato eliminado'}</span>
+                          {item.price > 0 && (
+                            <span>€{(item.price * item.quantity).toFixed(2)}</span>
+                          )}
+                        </div>
+                      ))
+                    )}
                   </div>
                   <div className="border-t mt-3 pt-3 flex justify-between font-semibold">
                     <span>Total</span>
                     <span>
-                      {order.isDailyMenu ? (
-                        `€${order.total.toFixed(2)}`
-                      ) : (
-                        `€${order.items.reduce((acc, item) => acc + item.price * item.quantity, 0).toFixed(2)}`
-                      )}
+                      €{order.total?.toFixed(2) ?? '0.00'}
                     </span>
                   </div>
                   {order.notes && (

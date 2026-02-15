@@ -123,11 +123,13 @@ model Order {
 model OrderItem {
   id        String   @id @default(uuid())
   orderId   String
-  dishId    String
+  dishId    String? // Ahora opcional
+  dishName  String? // Nombre del plato de menú
   quantity  Int
   price     Float
+  menuGroup Int?    // Identificador de grupo de menú
   createdAt DateTime @default(now())
-  dish      Dish     @relation(fields: [dishId], references: [id])
+  dish      Dish?    @relation(fields: [dishId], references: [id]) // Relación opcional
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("order_items")

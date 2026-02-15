@@ -45,8 +45,12 @@ router.get('/', adminAuthMiddleware, async (req, res) => {
       },
       orderBy: { createdAt: 'desc' }
     })
-    
-    res.json(orders)
+    // Añadir isDailyMenu a cada pedido si todos los items tienen price 0
+    const ordersWithFlag = orders.map(order => ({
+      ...order,
+      isDailyMenu: order.items.length > 0 && order.items.every(i => i.price === 0)
+    }));
+    res.json(ordersWithFlag)
   } catch (error) {
     console.error('Error al obtener pedidos:', error)
     res.status(500).json({ error: 'Error al obtener pedidos' })
@@ -75,12 +79,12 @@ router.get('/:id', adminAuthMiddleware, async (req, res) => {
         }
       }
     })
-    
     if (!order) {
       return res.status(404).json({ error: 'Pedido no encontrado' })
     }
-    
-    res.json(order)
+    // Añadir isDailyMenu si todos los items tienen price 0
+    const isDailyMenu = order.items.length > 0 && order.items.every(i => i.price === 0);
+    res.json({ ...order, isDailyMenu })
   } catch (error) {
     console.error('Error al obtener pedido:', error)
     res.status(500).json({ error: 'Error al obtener pedido' })
@@ -95,7 +99,17 @@ router.post('/',
     body('customerName').notEmpty().withMessage('El nombre es requerido'),
     body('customerPhone').notEmpty().withMessage('El teléfono es requerido'),
     body('items').isArray({ min: 1 }).withMessage('Debe incluir al menos un item'),
-    body('items.*.dishId').notEmpty().withMessage('Dish ID es requerido'),
+    // Permitir items sin dishId si esDailyMenu
+    body('items.*.dishId').custom((value, { req, path }) => {
+      if (req.body.isDailyMenu && (!value || value === '')) {
+        // Si es menú del día y no hay dishId, permitir
+        return true;
+      }
+      if (!value || value === '') {
+        throw new Error('Dish ID es requerido');
+      }
+      return true;
+    }),
     body('items.*.quantity').isInt({ min: 1 }).withMessage('La cantidad debe ser mayor a 0')
   ],
   async (req, res) => {
@@ -126,35 +140,52 @@ router.post('/',
       const orderItems = []
 
       for (const item of items) {
-        const dish = await prisma.dish.findUnique({
-          where: { id: item.dishId }
-        })
-
-        if (!dish) {
-          return res.status(404).json({ 
-            error: `Plato con ID ${item.dishId} no encontrado` 
-          })
+        let dish = null;
+        if (item.dishId) {
+          dish = await prisma.dish.findUnique({
+            where: { id: item.dishId }
+          });
+          if (!dish) {
+            return res.status(404).json({ 
+              error: `Plato con ID ${item.dishId} no encontrado` 
+            });
+          }
+          if (!req.body.isDailyMenu && !dish.available) {
+            return res.status(400).json({ 
+              error: `El plato ${dish.name} no está disponible` 
+            })
+          }
+          orderItems.push({
+            dishId: dish.id,
+            name: dish.name,
+            quantity: item.quantity,
+            price: item.price,
+            menuGroup: item.menuGroup ?? null
+          });
+          subtotal += item.price * item.quantity;
+        } else if (req.body.isDailyMenu && item.dishName) {
+          // Solo dishName, sin dishId ni relación
+          orderItems.push({
+            dishName: item.dishName,
+            quantity: item.quantity,
+            price: item.price,
+            menuGroup: item.menuGroup ?? null
+          });
+          subtotal += item.price * item.quantity;
         }
-
-        // Si el pedido es del menú del día, ignorar disponibilidad
-        // (isDailyMenu se envía en el body)
-        if (!req.body.isDailyMenu && !dish.available) {
-          return res.status(400).json({ 
-            error: `El plato ${dish.name} no está disponible` 
-          })
-        }
-
-        const itemTotal = dish.price * item.quantity
-        subtotal += itemTotal
-
-        orderItems.push({
-          dishId: dish.id,
-          quantity: item.quantity,
-          price: dish.price
-        })
       }
 
-      const total = subtotal // Aquí podrías agregar costos de envío, descuentos, etc.
+      // Si esDailyMenu, usar el precio del menú como total
+      let total = subtotal;
+      if (req.body.isDailyMenu && items.length > 0) {
+        // Buscar el precio del menú en el primer item del carrito
+        // El frontend envía el precio en el objeto principal, no en los items
+        total = req.body.itemsPrice || req.body.total || 0;
+        if (!total) {
+          // Fallback: intenta obtener el precio del menú desde el frontend
+          total = req.body.price || 0;
+        }
+      }
 
       // Crear el pedido
       const order = await prisma.order.create({
@@ -181,11 +212,7 @@ router.post('/',
               avatar: true
             }
           },
-          items: {
-            include: {
-              dish: true
-            }
-          }
+          items: true
         }
       })
 
