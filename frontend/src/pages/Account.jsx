@@ -2,19 +2,26 @@ import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
-import { userAuthAPI, userProfileAPI } from '../services/api'
+import { userAuthAPI, userProfileAPI, reservasAPI } from '../services/api'
 
 const Account = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
+  const [reservas, setReservas] = useState([])
+  const [activeTab, setActiveTab] = useState('perfil');
+  const tabs = [
+    { key: 'perfil', label: 'Editar Perfil' },
+    { key: 'reservas', label: 'Mis Reservas' },
+    { key: 'ajustes', label: 'Ajustes' },
+  ];
 
   // DEBUG: Mostrar el objeto profile en consola para verificar el campo role
-  useEffect(() => {
-    if (profile) {
-      console.log('Perfil cargado:', profile)
-    }
-  }, [profile])
+  // useEffect(() => {
+  //   if (profile) {
+  //     console.log('Perfil cargado:', profile)
+  //   }
+  // }, [profile])
   const [loginData, setLoginData] = useState({ email: '', password: '' })
   const [registerData, setRegisterData] = useState({
     name: '',
@@ -30,17 +37,35 @@ const Account = () => {
     avatar: null
   })
   const [submitting, setSubmitting] = useState(false)
+  const [passwordData, setPasswordData] = useState({
+    current: '',
+    new: '',
+    repeat: ''
+  })
+  const [passwordChanging, setPasswordChanging] = useState(false)
   const [registerAvatarPreview, setRegisterAvatarPreview] = useState(null)
   const [profileAvatarPreview, setProfileAvatarPreview] = useState(null)
+
 
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (token) {
       fetchProfile()
+      fetchReservas()
     } else {
       setLoading(false)
     }
   }, [])
+
+  // Obtener reservas del usuario
+  const fetchReservas = async () => {
+    try {
+      const res = await reservasAPI.getMis();
+      setReservas(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      setReservas([])
+    }
+  }
 
   const fetchProfile = async () => {
     try {
@@ -78,6 +103,8 @@ const Account = () => {
       setIsAuthenticated(true)
       toast.success('Inicio de sesión exitoso')
       window.dispatchEvent(new Event('user-auth-changed'))
+      // ACTUALIZAR RESERVAS AL INICIAR SESIÓN
+      fetchReservas()
     } catch (error) {
       toast.error('Email o contraseña incorrectos')
     } finally {
@@ -293,150 +320,271 @@ const Account = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl bg-white p-6 md:p-8 shadow-xl">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
-                <div>
-                  <h3 className="text-2xl font-semibold">Actualizar Perfil</h3>
-                  <p className="text-sm text-neutral-500">Mantén tus datos al día para pedidos mas rapidos.</p>
-                </div>
-                <div className="flex items-center gap-3 text-xs uppercase tracking-[0.25em] text-neutral-400">
-                  <span>Cuenta</span>
-                  <span className="w-12 h-px bg-neutral-200" />
-                  <span>Preferencias</span>
-                </div>
+            <div>
+              {/* Tabs */}
+              <div className="flex gap-2 mb-6">
+                {tabs.map(tab => (
+                  <button
+                    key={tab.key}
+                    className={`px-4 py-2 rounded-lg font-semibold ${activeTab === tab.key ? 'bg-primary-600 text-white' : 'bg-neutral-200 text-neutral-700'}`}
+                    onClick={() => setActiveTab(tab.key)}
+                    type="button"
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
-
-              <form onSubmit={handleProfileUpdate} className="space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">Nombre</label>
-                    <input
-                      className="input-field"
-                      value={profileData.name}
-                      onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">Teléfono</label>
-                    <input
-                      className="input-field"
-                      value={profileData.phone}
-                      onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">Email</label>
-                  <input
-                    type="email"
-                    className="input-field"
-                    value={profileData.email}
-                    onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-3">Avatar</label>
-                  <div className="flex flex-col md:flex-row md:items-center gap-4">
-                    <label
-                      htmlFor="profile-avatar"
-                      className="relative w-24 h-24 rounded-full overflow-hidden bg-neutral-100 border border-neutral-200 shadow cursor-pointer group"
-                    >
-                      {profileAvatarPreview ? (
-                        <img src={profileAvatarPreview} alt="Preview" className="w-full h-full object-cover" />
-                      ) : (
-                        <img
-                          src="/avatar-default.svg"
-                          alt="Avatar por defecto"
-                          className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition"
-                        />
-                      )}
-                      <span className="absolute inset-0 bg-black/40 text-white text-xs font-medium flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                        Cambiar
-                      </span>
-                    </label>
+              {/* Tab Content */}
+              {activeTab === 'perfil' && (
+                <div className="rounded-2xl bg-white p-6 md:p-8 shadow-xl">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
                     <div>
-                      <input
-                        id="profile-avatar"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => setProfileData({ ...profileData, avatar: e.target.files?.[0] || null })}
-                      />
-                      <p className="text-sm text-neutral-500">Haz click en el avatar para subir una nueva imagen.</p>
+                      <h3 className="text-2xl font-semibold">Actualizar Perfil</h3>
+                      <p className="text-sm text-neutral-500">Mantén tus datos al día para pedidos mas rapidos.</p>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs uppercase tracking-[0.25em] text-neutral-400">
+                      <span>Cuenta</span>
+                      <span className="w-12 h-px bg-neutral-200" />
+                      <span>Preferencias</span>
                     </div>
                   </div>
+
+                  <form onSubmit={handleProfileUpdate} className="space-y-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">Nombre</label>
+                        <input
+                          className="input-field"
+                          value={profileData.name}
+                          onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">Teléfono</label>
+                        <input
+                          className="input-field"
+                          value={profileData.phone}
+                          onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">Email</label>
+                      <input
+                        type="email"
+                        className="input-field"
+                        value={profileData.email}
+                        onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-3">Avatar</label>
+                      <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        <label
+                          htmlFor="profile-avatar"
+                          className="relative w-24 h-24 rounded-full overflow-hidden bg-neutral-100 border border-neutral-200 shadow cursor-pointer group"
+                        >
+                          {profileAvatarPreview ? (
+                            <img src={profileAvatarPreview} alt="Preview" className="w-full h-full object-cover" />
+                          ) : (
+                            <img
+                              src="/avatar-default.svg"
+                              alt="Avatar por defecto"
+                              className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition"
+                            />
+                          )}
+                          <span className="absolute inset-0 bg-black/40 text-white text-xs font-medium flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            Cambiar
+                          </span>
+                        </label>
+                        <div>
+                          <input
+                            id="profile-avatar"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => setProfileData({ ...profileData, avatar: e.target.files?.[0] || null })}
+                          />
+                          <p className="text-sm text-neutral-500">Haz click en el avatar para subir una nueva imagen.</p>
+                        </div>
+                      </div>
+                    </div>
+                    <button type="submit" className="btn-primary" disabled={submitting}>
+                      {submitting ? 'Actualizando...' : 'Guardar cambios'}
+                    </button>
+                  </form>
                 </div>
-                <button type="submit" className="btn-primary" disabled={submitting}>
-                  {submitting ? 'Actualizando...' : 'Guardar cambios'}
-                </button>
-              </form>
+              )}
+              {activeTab === 'reservas' && (
+                <div className="rounded-2xl bg-white p-6 md:p-8 shadow-xl">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2 gap-2">
+                    <h3 className="text-2xl font-bold text-neutral-900">Mis Reservas</h3>
+                    <div className="flex items-center gap-3 text-xs uppercase tracking-[0.25em] text-neutral-400">
+                      <span className="font-semibold text-neutral-900">Reservas</span>
+                      <span className="w-12 h-px bg-neutral-200" />
+                      <span>Historial</span>
+                    </div>
+                  </div>
+                  <p className="text-neutral-500 mb-5 text-sm">Aquí puedes consultar el historial y estado de tus reservas realizadas en El Casino. Si tienes alguna duda o necesitas modificar una reserva, contacta con nuestro equipo.</p>
+                  {reservas && reservas.length > 0 ? (
+                    <div
+                      className={`space-y-4 ${reservas.length > 4 ? 'max-h-80 overflow-y-auto pr-2' : ''}`}
+                      style={{ scrollbarGutter: 'stable' }}
+                    >
+                      {reservas.map((reserva, idx) => {
+                        let fecha = reserva.fechaReserva ? new Date(reserva.fechaReserva) : null;
+                        let fechaStr = fecha ? fecha.toLocaleDateString() : '-';
+                        return (
+                          <div
+                            key={reserva.id || idx}
+                            className="flex items-center justify-between gap-4 border border-neutral-200 rounded-lg px-4 py-2 bg-white shadow-sm hover:shadow-md transition-all"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-primary-700 text-base">{fechaStr}</span>
+                                <span className="text-xs text-neutral-400">|</span>
+                                <span className="text-sm text-neutral-700">{reserva.cantidadPersonas} {reserva.cantidadPersonas === 1 ? 'persona' : 'personas'}</span>
+                                <span className="text-xs text-neutral-400">|</span>
+                                <span className="text-sm text-neutral-700 capitalize">{reserva.tipo}</span>
+                                {reserva.estado && (
+                                  <span className={`ml-2 px-2 py-0.5 rounded text-xs font-medium ${reserva.estado === 'aprobada' ? 'bg-green-100 text-green-700' : reserva.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{reserva.estado}</span>
+                                )}
+                              </div>
+                              <div className="text-xs text-neutral-500 mt-1">
+                                ¡Gracias por confiar en nosotros! Te esperamos en El Casino para disfrutar de tu reserva.
+                              </div>
+                              {reserva.comentarios && (
+                                <div className="text-xs text-neutral-400 truncate mt-1">{reserva.comentarios}</div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8">
+                      <p className="text-neutral-500 mb-4">Aún no has realizado ninguna reserva.</p>
+                      <a href="/reservas" className="btn-primary px-6 py-2 rounded-lg font-semibold">Hacer Reserva</a>
+                    </div>
+                  )}
+                </div>
+              )}
+              {activeTab === 'ajustes' && (
+                <div className="rounded-2xl bg-white p-6 md:p-8 shadow-xl space-y-8">
+                  <div>
+                    <h3 className="text-xl font-bold mb-2 text-primary-700">Cambiar Contraseña</h3>
+                    <form className="space-y-3 max-w-md" onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!passwordData.current || !passwordData.new || !passwordData.repeat) {
+                        toast.error('Completa todos los campos');
+                        return;
+                      }
+                      if (passwordData.new.length < 6) {
+                        toast.error('La nueva contraseña debe tener al menos 6 caracteres');
+                        return;
+                      }
+                      if (passwordData.new !== passwordData.repeat) {
+                        toast.error('Las contraseñas no coinciden');
+                        return;
+                      }
+                      setPasswordChanging(true);
+                      try {
+                        // Lógica real: llamar a la API para cambiar contraseña
+                        await userProfileAPI.changePassword({
+                          currentPassword: passwordData.current,
+                          newPassword: passwordData.new
+                        });
+                        toast.success('Contraseña cambiada correctamente');
+                        setPasswordData({ current: '', new: '', repeat: '' });
+                      } catch (error) {
+                        const msg = error?.response?.data?.error || 'Error al cambiar la contraseña';
+                        if (msg === 'La contraseña actual es incorrecta') {
+                          toast.error('La contraseña actual que has introducido no es válida. Por favor, verifica e inténtalo de nuevo.');
+                        } else {
+                          toast.error(msg);
+                        }
+                      } finally {
+                        setPasswordChanging(false);
+                      }
+                    }}>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1">Contraseña actual</label>
+                        <input
+                          type="password"
+                          className="input-field w-full"
+                          placeholder="Introduce tu contraseña actual"
+                          value={passwordData.current}
+                          onChange={e => setPasswordData({ ...passwordData, current: e.target.value })}
+                          autoComplete="current-password"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1">Nueva contraseña</label>
+                        <input
+                          type="password"
+                          className="input-field w-full"
+                          placeholder="Nueva contraseña"
+                          value={passwordData.new}
+                          onChange={e => setPasswordData({ ...passwordData, new: e.target.value })}
+                          autoComplete="new-password"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-1">Repetir nueva contraseña</label>
+                        <input
+                          type="password"
+                          className="input-field w-full"
+                          placeholder="Repite la nueva contraseña"
+                          value={passwordData.repeat}
+                          onChange={e => setPasswordData({ ...passwordData, repeat: e.target.value })}
+                          autoComplete="new-password"
+                        />
+                      </div>
+                      <button type="submit" className="btn-primary mt-2" disabled={passwordChanging}>
+                        {passwordChanging ? 'Cambiando...' : 'Cambiar contraseña'}
+                      </button>
+                    </form>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold mb-2 text-primary-700">Privacidad y permisos</h3>
+                    <p className="text-neutral-600 text-sm mb-1">Tus datos personales solo se usan para gestionar reservas y mejorar tu experiencia. Puedes solicitar la eliminación de tu cuenta en cualquier momento.</p>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold mb-2 text-primary-700">Desconectar todos los dispositivos</h3>
+                    <p className="text-neutral-600 text-sm mb-2">¿Has iniciado sesión en un dispositivo público o compartido? Puedes cerrar todas tus sesiones activas aquí.</p>
+                    <button type="button" className="btn-primary opacity-60 cursor-not-allowed" disabled>
+                      Desconectar todos los dispositivos (próximamente)
+                    </button>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold mb-2 text-primary-700">Actividad reciente</h3>
+                    <ul className="text-neutral-600 text-sm list-disc pl-5">
+                      <li>Inicio de sesión: 16/02/2026 12:34</li>
+                      <li>Reserva creada: 15/02/2026 19:00</li>
+                      <li>Perfil actualizado: 10/02/2026 09:12</li>
+                      <li>Contraseña cambiada: 01/02/2026 17:45</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="rounded-2xl bg-white p-6 md:p-8 shadow-xl">
-              <h3 className="text-2xl font-semibold mb-2">Iniciar Sesion</h3>
-              <p className="text-sm text-neutral-500 mb-6">Accede con tu email y contraseña.</p>
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">Email</label>
-                  <input
-                    type="email"
-                    className="input-field"
-                    value={loginData.email}
-                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">Contraseña</label>
-                  <input
-                    type="password"
-                    className="input-field"
-                    value={loginData.password}
-                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                    required
-                  />
-                </div>
-                <button type="submit" className="btn-primary" disabled={submitting}>
-                  {submitting ? 'Entrando...' : 'Entrar'}
-                </button>
-              </form>
-            </div>
-
-            <div className="rounded-2xl bg-white p-6 md:p-8 shadow-xl">
-              <h3 className="text-2xl font-semibold mb-2">Crear Cuenta</h3>
-              <p className="text-sm text-neutral-500 mb-6">Un perfil te permite repetir pedidos y guardar tus datos.</p>
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">Nombre</label>
-                  <input
-                    className="input-field"
-                    value={registerData.name}
-                    onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">Email</label>
-                  <input
-                    type="email"
-                    className="input-field"
-                    value={registerData.email}
-                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="rounded-2xl bg-white p-6 md:p-8 shadow-xl">
+                <h3 className="text-2xl font-semibold mb-2">Iniciar Sesión</h3>
+                <p className="text-sm text-neutral-500 mb-6">Accede con tu email y contraseña.</p>
+                <form onSubmit={handleLogin} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">Telefono</label>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Email</label>
                     <input
+                      type="email"
                       className="input-field"
-                      value={registerData.phone}
-                      onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
+                      value={loginData.email}
+                      onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                       required
                     />
                   </div>
@@ -445,49 +593,102 @@ const Account = () => {
                     <input
                       type="password"
                       className="input-field"
-                      value={registerData.password}
-                      onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                      value={loginData.password}
+                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                       required
                     />
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-3">Avatar</label>
-                  <div className="flex flex-col md:flex-row md:items-center gap-4">
-                    <label
-                      htmlFor="register-avatar"
-                      className="relative w-24 h-24 rounded-full overflow-hidden bg-neutral-100 border border-neutral-200 shadow cursor-pointer group"
-                    >
-                      {registerAvatarPreview ? (
-                        <img src={registerAvatarPreview} alt="Preview" className="w-full h-full object-cover" />
-                      ) : (
-                        <img
-                          src="/avatar-default.svg"
-                          alt="Avatar por defecto"
-                          className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition"
-                        />
-                      )}
-                      <span className="absolute inset-0 bg-black/40 text-white text-xs font-medium flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                        Subir
-                      </span>
-                    </label>
+                  <div className="mb-2">
+                    <span className="text-xs text-primary-700 cursor-not-allowed opacity-70">
+                      ¿Has olvidado tu contraseña? <span className="text-neutral-400">(próximamente)</span>
+                    </span>
+                  </div>
+                  <button type="submit" className="btn-primary" disabled={submitting}>
+                    {submitting ? 'Entrando...' : 'Entrar'}
+                  </button>
+                </form>
+              </div>
+              <div className="rounded-2xl bg-white p-6 md:p-8 shadow-xl">
+                <h3 className="text-2xl font-semibold mb-2">Crear Cuenta</h3>
+                <p className="text-sm text-neutral-500 mb-6">Un perfil te permite repetir pedidos y guardar tus datos.</p>
+                <form onSubmit={handleRegister} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Nombre</label>
+                    <input
+                      className="input-field"
+                      value={registerData.name}
+                      onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Email</label>
+                    <input
+                      type="email"
+                      className="input-field"
+                      value={registerData.email}
+                      onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">Telefono</label>
                       <input
-                        id="register-avatar"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => setRegisterData({ ...registerData, avatar: e.target.files?.[0] || null })}
+                        className="input-field"
+                        value={registerData.phone}
+                        onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
+                        required
                       />
-                      <p className="text-sm text-neutral-500">Click en el avatar para elegir una imagen.</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">Contraseña</label>
+                      <input
+                        type="password"
+                        className="input-field"
+                        value={registerData.password}
+                        onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                        required
+                      />
                     </div>
                   </div>
-                </div>
-                <button type="submit" className="btn-primary" disabled={submitting}>
-                  {submitting ? 'Creando...' : 'Crear cuenta'}
-                </button>
-              </form>
-            </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-3">Avatar</label>
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                      <label
+                        htmlFor="register-avatar"
+                        className="relative w-24 h-24 rounded-full overflow-hidden bg-neutral-100 border border-neutral-200 shadow cursor-pointer group"
+                      >
+                        {registerAvatarPreview ? (
+                          <img src={registerAvatarPreview} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <img
+                            src="/avatar-default.svg"
+                            alt="Avatar por defecto"
+                            className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition"
+                          />
+                        )}
+                        <span className="absolute inset-0 bg-black/40 text-white text-xs font-medium flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                          Subir
+                        </span>
+                      </label>
+                      <div>
+                        <input
+                          id="register-avatar"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => setRegisterData({ ...registerData, avatar: e.target.files?.[0] || null })}
+                        />
+                        <p className="text-sm text-neutral-500">Click en el avatar para elegir una imagen.</p>
+                      </div>
+                    </div>
+                  </div>
+                  <button type="submit" className="btn-primary" disabled={submitting}>
+                    {submitting ? 'Creando...' : 'Crear cuenta'}
+                  </button>
+                </form>
+              </div>
           </div>
         )}
         </div>

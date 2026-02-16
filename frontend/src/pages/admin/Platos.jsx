@@ -111,7 +111,20 @@ const Platos = () => {
 			setDishes(dishes.filter(d => d.id !== id));
 			toast.success('Plato eliminado correctamente');
 		} catch (error) {
-			toast.error('Error al eliminar plato');
+			// Si el backend devuelve el mensaje específico
+			if (error.response && error.response.data && error.response.data.error) {
+				const msg = error.response.data.error;
+				if (
+					msg.includes('No se puede borrar el plato porque ya ha sido usado previamente') ||
+					msg.includes('violates RESTRICT setting of foreign key constraint')
+				) {
+					toast.error('No se puede borrar el plato porque ya ha sido usado previamente en un ticket.');
+				} else {
+					toast.error('Error al eliminar plato');
+				}
+			} else {
+				toast.error('Error al eliminar plato');
+			}
 		}
 	};
 

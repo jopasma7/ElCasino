@@ -25,6 +25,7 @@ import authRoutes from './routes/auth.js'
 import userRoutes from './routes/users.js'
 import categoryRoutes from './routes/categories.js'
 import ticketRoutes from './routes/tickets.js'
+import reservasRoutes from './routes/reservas.js'
 
 console.log('✅ Rutas importadas correctamente')
 
@@ -83,6 +84,7 @@ app.use('/api/daily-menu-options', dailyMenuOptionsRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/tickets', ticketRoutes)
+app.use('/api/reservas', reservasRoutes)
 
 console.log('✅ Rutas configuradas correctamente')
 

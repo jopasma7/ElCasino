@@ -46,7 +46,8 @@ export const userProfileAPI = {
   updateMe: (formData) => api.put('/users/me', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  deleteMe: () => api.delete('/users/me')
+  deleteMe: () => api.delete('/users/me'),
+  changePassword: (data) => api.post('/users/change-password', data)
 }
 
 export const usersAPI = {
@@ -105,6 +106,15 @@ export const ordersAPI = {
   create: (data) => api.post('/orders', data),
   updateStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
   cancel: (id) => api.delete(`/orders/${id}`)
+}
+
+// Reservas API
+export const reservasAPI = {
+  create: (data) => api.post('/reservas', data),
+  getMis: () => api.get('/reservas/mis'),
+  getAll: () => api.get('/reservas'),
+  updateEstado: (id, estado) => api.put(`/reservas/${id}`, { estado }),
+  update: (id, data) => api.put(`/reservas/mis/${id}`, data) // ahora usa el endpoint de usuario
 }
 
 export default api

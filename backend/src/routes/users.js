@@ -205,6 +205,37 @@ router.get('/me', userAuthMiddleware, async (req, res) => {
   }
 })
 
+// Cambiar contraseña del usuario autenticado
+router.post('/change-password', userAuthMiddleware, [
+  body('currentPassword').notEmpty().withMessage('La contraseña actual es requerida'),
+  body('newPassword').isLength({ min: 6 }).withMessage('La nueva contraseña debe tener al menos 6 caracteres')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    const { currentPassword, newPassword } = req.body;
+    const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    const validPassword = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'La contraseña actual es incorrecta' });
+    }
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: newHash }
+    });
+    res.json({ message: 'Contraseña actualizada correctamente' });
+  } catch (error) {
+    console.error('Error al cambiar contraseña:', error);
+    res.status(500).json({ error: 'Error al cambiar contraseña' });
+  }
+});
+
 // Eliminar cuenta del usuario autenticado
 router.delete('/me', userAuthMiddleware, async (req, res) => {
   try {

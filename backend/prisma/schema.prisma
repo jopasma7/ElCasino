@@ -1,3 +1,27 @@
+model Reserva {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  fechaReserva      DateTime
+  cantidadPersonas  Int
+  tipo              TipoReserva
+  comentarios       String?
+  estado            EstadoReserva @default(pendiente)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+enum TipoReserva {
+  almuerzo
+  comida
+  cena
+}
+
+enum EstadoReserva {
+  pendiente
+  aprobada
+  rechazada
+}
 model Ticket {
   id        String     @id @default(uuid())
   mesa      Int
@@ -79,6 +103,7 @@ model User {
   updatedAt    DateTime @updatedAt
   role         Role     @default(Usuario)
   orders       Order[]
+  reservas     Reserva[]
 
   @@map("users")
 }

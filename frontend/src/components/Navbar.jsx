@@ -11,12 +11,14 @@ const Navbar = () => {
   const [userName, setUserName] = useState(null)
   const { isAdmin, loading } = useAdmin()
 
+  const token = localStorage.getItem('token')
   const navLinks = [
     { path: '/', label: 'Inicio' },
     { path: '/menu', label: 'Carta' },
     { path: '/menu-del-dia', label: 'Menú del Día' },
     { path: '/galeria', label: 'Galería' },
     { path: '/miembros', label: 'Miembros' },
+    ...(token ? [{ path: '/reservas', label: 'Reservas' }] : []), // Solo si logueado
     { path: '/contacto', label: 'Contacto' },
     ...(isAdmin ? [
       { path: '/admin', label: 'Admin' },

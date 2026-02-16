@@ -196,10 +196,18 @@ router.delete('/:id', adminAuthMiddleware, async (req, res) => {
     })
     
     res.json({ message: 'Plato eliminado correctamente' })
-  } catch (error) {
-    console.error('Error al eliminar plato:', error)
-    res.status(500).json({ error: 'Error al eliminar plato' })
-  }
+    } catch (error) {
+      console.error('Error al eliminar plato:', error)
+      // Detecta el error de restricción de clave foránea
+      if (
+        error.code === 'P2003' || // Prisma error de restricción
+        error.message?.includes('violates RESTRICT setting of foreign key constraint')
+      ) {
+        res.status(400).json({ error: 'No se puede borrar el plato porque ya ha sido usado previamente en un ticket.' })
+      } else {
+        res.status(500).json({ error: 'Error al eliminar plato' })
+      }
+    }
 })
 
 export default router

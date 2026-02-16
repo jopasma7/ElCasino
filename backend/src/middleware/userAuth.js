@@ -15,7 +15,7 @@ export const userAuthMiddleware = (req, res, next) => {
       return res.status(403).json({ error: 'No autorizado - Token de usuario requerido' })
     }
 
-    req.user = decoded
+    req.user = { ...decoded, id: decoded.userId }
     next()
   } catch (error) {
     return res.status(401).json({ error: 'No autorizado - Token inválido' })

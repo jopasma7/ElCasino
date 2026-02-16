@@ -11,6 +11,8 @@ import Admin from './pages/Admin'
 import TPV from './pages/TPV'
 import Account from './pages/Account'
 import Members from './pages/Members'
+import GestionReservas from './pages/admin/GestionReservas'
+import Reservas from './pages/Reservas'
 
 import { useEffect } from 'react';
 function AppLayout() {
@@ -37,6 +39,8 @@ function AppLayout() {
           <Route path="/admin" element={<Admin />} />
           <Route path="/tpv" element={<TPV />} />
           <Route path="/miembros" element={<Members />} />
+          <Route path="/admin/reservas" element={<GestionReservas />} />
+          <Route path="/reservas" element={<Reservas />} />
         </Routes>
       </main>
       {!hideFooter && <Footer />}

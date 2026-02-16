@@ -6,9 +6,11 @@ import Platos from './admin/Platos';
 import Galeria from './admin/Galeria';
 import DailyMenu from './admin/DailyMenu';
 import Pedidos from './admin/Pedidos';
+import GestionReservas from './admin/GestionReservas';
+import InfoRestaurante from './admin/InfoRestaurante';
 
 const Admin = () => {
-  const [activeTab, setActiveTab] = useState('dishes')
+  const [activeTab, setActiveTab] = useState('info')
   const { isAdmin, loading: adminLoading } = useAdmin()
 
   if (adminLoading) {
@@ -92,6 +94,26 @@ const Admin = () => {
             >
               Pedidos
             </button>
+            <button
+              onClick={() => setActiveTab('reservas')}
+              className={`px-6 py-4 font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'reservas'
+                  ? 'text-primary-600 border-b-2 border-primary-600'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              Gestionar Reservas
+            </button>
+            <button
+              onClick={() => setActiveTab('info')}
+              className={`px-6 py-4 font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'info'
+                  ? 'text-primary-600 border-b-2 border-primary-600'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              Información Restaurante
+            </button>
           </div>
         </div>
 
@@ -101,6 +123,8 @@ const Admin = () => {
           {activeTab === 'gallery' && <Galeria />}
           {activeTab === 'dailyMenu' && <DailyMenu />}
           {activeTab === 'orders' && <Pedidos />}
+          {activeTab === 'reservas' && <GestionReservas />}
+          {activeTab === 'info' && <InfoRestaurante />}
         </div>
       </div>
     </div>
