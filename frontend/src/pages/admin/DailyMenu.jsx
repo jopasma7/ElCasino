@@ -193,8 +193,21 @@ const DailyMenu = () => {
 
   return (
     <div>
+      <div className="mb-6">
+        <div className="mb-8 w-full">
+          <div className="relative rounded-2xl bg-gradient-to-r from-primary-50 via-white to-primary-100 shadow p-6 mb-2 flex items-center gap-4 border border-primary-100">
+            <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary-100 text-primary-700 text-3xl shadow mr-2">
+              <ClipboardList className="w-9 h-9" />
+            </span>
+            <div>
+              <h2 className="text-3xl font-extrabold text-primary-800 mb-1 drop-shadow-sm tracking-tight">Gestión del Menú Diario</h2>
+              <p className="text-primary-700 text-base font-medium">Administra y personaliza el menú diario de tu restaurante de forma visual y sencilla.</p>
+            </div>
+          </div>
+        </div>
+      </div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">Menú del Día</h2>
+        <div></div>
         <button
           type="button"
           className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors"

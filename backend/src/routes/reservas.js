@@ -4,6 +4,44 @@ import { userAuthMiddleware } from '../middleware/userAuth.js';
 import { adminAuthMiddleware } from '../middleware/adminAuth.js';
 
 const router = express.Router();
+// Crear reserva como admin (aprobada directamente)
+router.post('/admin', adminAuthMiddleware, async (req, res) => {
+  try {
+    const { fechaReserva, cantidadPersonas, tipo, comentarios, userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId es requerido' });
+    }
+    const reserva = await prisma.reserva.create({
+      data: {
+        userId,
+        fechaReserva: new Date(fechaReserva),
+        cantidadPersonas,
+        tipo,
+        comentarios,
+        estado: 'aprobada',
+      },
+    });
+    res.status(201).json(reserva);
+  } catch (error) {
+    console.error('Error al crear reserva como admin:', error);
+    res.status(500).json({ error: 'Error al crear reserva como admin' });
+  }
+});
+
+// Eliminar reserva (admin, cualquier estado)
+router.delete('/:id', adminAuthMiddleware, async (req, res) => {
+  try {
+    const reserva = await prisma.reserva.findUnique({ where: { id: req.params.id } });
+    if (!reserva) {
+      return res.status(404).json({ error: 'Reserva no encontrada' });
+    }
+    await prisma.reserva.delete({ where: { id: req.params.id } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error al eliminar reserva (admin):', error);
+    res.status(500).json({ error: 'Error al eliminar reserva' });
+  }
+});
 
 // Crear reserva (usuario logueado)
 router.post('/', userAuthMiddleware, async (req, res) => {
@@ -40,6 +78,24 @@ router.get('/mis', userAuthMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error al obtener reservas:', error);
     res.status(500).json({ error: 'Error al obtener reservas' });
+  }
+});
+
+// Eliminar reserva (usuario, solo si es suya y pendiente)
+router.delete('/mis/:id', userAuthMiddleware, async (req, res) => {
+  try {
+    const reserva = await prisma.reserva.findUnique({ where: { id: req.params.id } });
+    if (!reserva || reserva.userId !== req.user.id) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+    if (reserva.estado !== 'pendiente') {
+      return res.status(400).json({ error: 'Solo puedes eliminar reservas pendientes' });
+    }
+    await prisma.reserva.delete({ where: { id: req.params.id } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error al eliminar reserva:', error);
+    res.status(500).json({ error: 'Error al eliminar reserva' });
   }
 });
 

@@ -63,8 +63,8 @@ const Home = () => {
               </span>
             </div>
             
-            <h1 className="text-2xl xs:text-3xl sm:text-5xl md:text-7xl font-display font-bold text-white mb-4 sm:mb-6 leading-tight">
-              El Casino<br />Benilloba
+            <h1 className="text-2xl xs:text-3xl sm:text-5xl md:text-7xl font-display font-bold text-white mb-4 sm:mb-6 leading-tight flex flex-wrap items-center gap-3">
+              El Casino <span className="hidden xs:inline">|</span> <span className="block xs:inline">Benilloba</span>
             </h1>
             
             <p className="text-base xs:text-lg md:text-2xl text-primary-50 mb-6 sm:mb-8 leading-relaxed max-w-2xl">
@@ -80,6 +80,16 @@ const Home = () => {
               <Link to="/pedido" className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 sm:px-8 sm:py-4 rounded-lg font-semibold inline-flex items-center justify-center transition-all transform hover:scale-105 text-sm sm:text-lg">
                 Hacer un Pedido
               </Link>
+              <Link to="/login" className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 sm:px-8 sm:py-4 rounded-lg font-semibold inline-flex items-center justify-center transition-all transform hover:scale-105 text-sm sm:text-lg gap-2">
+                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" /></svg>
+                Registrarse
+              </Link>
+            </div>
+            <div className="mt-5 flex items-center gap-3 bg-primary-900/80 border border-primary-400 rounded-xl px-5 py-3 shadow-lg max-w-xl">
+              <svg className="w-7 h-7 text-primary-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" /></svg>
+              <span className="text-primary-100 text-base sm:text-lg font-semibold drop-shadow">
+                Para poder reservar mesa y disfrutar de ventajas exclusivas, es necesario crear una cuenta gratuita.<br className="hidden sm:block" /> ¡Hazte miembro y vive la experiencia El Casino!
+              </span>
             </div>
 
             {/* Quick Info */}
@@ -103,7 +113,7 @@ const Home = () => {
                 <Phone className="w-6 h-6 text-primary-300" />
                 <div>
                   <p className="text-sm text-primary-200">Teléfono</p>
-                  <p className="font-semibold">+34 722 74 19 92</p>
+                  <p className="font-semibold whitespace-nowrap">+34 722 74 19 92</p>
                 </div>
               </div>
             </div>

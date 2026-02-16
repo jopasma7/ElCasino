@@ -36,6 +36,7 @@ function AppLayout() {
           <Route path="/pedido" element={<Order />} />
           <Route path="/contacto" element={<Contact />} />
           <Route path="/cuenta" element={<Account />} />
+          <Route path="/login" element={<Account />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/tpv" element={<TPV />} />
           <Route path="/miembros" element={<Members />} />

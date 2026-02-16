@@ -102,15 +102,27 @@ const Galeria = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">Galería de Imágenes</h2>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="btn-primary flex items-center gap-2"
-        >
-          <Plus className="w-5 h-5" />
-          Subir Imagen
-        </button>
+      <div className="mb-6">
+        <div className="mb-8 w-full">
+          <div className="relative rounded-2xl bg-gradient-to-r from-primary-50 via-white to-primary-100 shadow p-6 mb-2 flex items-center gap-4 border border-primary-100">
+            <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary-100 text-primary-700 text-3xl shadow mr-2">
+              <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor' className='w-9 h-9'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9 6 9-6' /></svg>
+            </span>
+            <div>
+              <h2 className="text-3xl font-extrabold text-primary-800 mb-1 drop-shadow-sm tracking-tight">Galería de Imágenes</h2>
+              <p className="text-primary-700 text-base font-medium">Gestiona y sube imágenes para mostrar la mejor cara de tu restaurante.</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end items-center mb-2">
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            Subir Imagen
+          </button>
+        </div>
       </div>
 
       {showForm && (

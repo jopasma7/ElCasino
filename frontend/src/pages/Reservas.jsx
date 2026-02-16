@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { reservasAPI } from '../services/api';
 import { useAdmin } from '../hooks/useAdmin';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+const MySwal = withReactContent(Swal);
 
 const tipos = [
   { value: 'almuerzo', label: 'Almuerzo' },
@@ -265,7 +268,8 @@ function Reservas() {
         </div>
       </div>
       </div>
-      <div className="w-full max-w-5xl mt-8">
+      {reservas.length > 0 && (
+        <div className="w-full max-w-5xl mt-8">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-semibold text-primary-700">Mis reservas</h3>
           {/* Filtros de estado y orden solo si hay reservas */}
@@ -301,7 +305,7 @@ function Reservas() {
         {loading ? (
           <div className="text-primary-700">Cargando...</div>
         ) : reservas.length === 0 ? (
-          <div className="text-secondary-500 text-center">No tienes reservas.</div>
+          null
         ) : (
           <>
             <div className={reservasFiltradas.length > 3 ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-96 overflow-y-auto pr-2" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"} style={{ scrollbarGutter: 'stable' }}>
@@ -309,7 +313,8 @@ function Reservas() {
                 let estadoColor = r.estado === 'aprobada' ? 'bg-green-100 text-green-700' : r.estado === 'rechazada' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700';
                 let estadoIcon = r.estado === 'aprobada' ? '✔️' : r.estado === 'rechazada' ? '❌' : '⏳';
                 const fechaObj = new Date(r.fechaReserva);
-                const fechaLarga = fechaObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+                const fechaLarga = fechaObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+                const fechaLargaConAnio = fechaObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
                 const tipoLabel = tipos.find(t => t.value === r.tipo)?.label || r.tipo;
                 let mensaje = '';
                 if (r.estado === 'aprobada') mensaje = '¡Gracias por reservar! Te esperamos.';
@@ -321,23 +326,55 @@ function Reservas() {
                       <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-xl font-bold ${estadoColor}`}>{estadoIcon}</span>
                       <span className="font-bold text-primary-800 text-lg">{fechaLarga}</span>
                       {r.estado === 'pendiente' && (
-                        <button
-                          className="ml-auto text-primary-700 hover:text-primary-900 underline text-xs font-semibold"
-                          onClick={() => {
-                            setEditReserva(r);
-                            setEditForm({
-                              fecha: r.fechaReserva.split('T')[0],
-                              personas: r.cantidadPersonas,
-                              tipo: r.tipo,
-                              comentarios: r.comentarios || ''
-                            });
-                          }}
-                        >Editar</button>
+                        <div className="ml-auto flex gap-2">
+                          <button
+                            className="text-primary-700 hover:text-primary-900 underline text-xs font-semibold"
+                            onClick={() => {
+                              setEditReserva(r);
+                              setEditForm({
+                                fecha: r.fechaReserva.split('T')[0],
+                                personas: r.cantidadPersonas,
+                                tipo: r.tipo,
+                                comentarios: r.comentarios || ''
+                              });
+                            }}
+                          >Editar</button>
+                          <button
+                            className="text-red-600 hover:text-red-800 underline text-xs font-semibold"
+                            onClick={async () => {
+                              const result = await MySwal.fire({
+                                title: '<span style="color:#a66a06;font-weight:bold">¿Eliminar reserva?</span>',
+                                html: '<div style="color:#444">¿Seguro que quieres eliminar esta reserva? <br><b>Esta acción no se puede deshacer.</b></div>',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                focusCancel: true,
+                                confirmButtonColor: '#a66a06',
+                                cancelButtonColor: '#d33',
+                                confirmButtonText: '<b>Eliminar</b>',
+                                cancelButtonText: 'Cancelar',
+                                customClass: {
+                                  popup: 'swal2-rounded swal2-shadow',
+                                  confirmButton: 'swal2-confirm-custom',
+                                  cancelButton: 'swal2-cancel-custom'
+                                },
+                                buttonsStyling: false
+                              });
+                              if (!result.isConfirmed) return;
+                              try {
+                                await reservasAPI.delete(r.id);
+                                toast.success('Reserva eliminada');
+                                fetchMisReservas();
+                              } catch {
+                                toast.error('Error al eliminar la reserva');
+                              }
+                            }}
+                          >Eliminar</button>
+                        </div>
                       )}
                     </div>
                     <div className="text-primary-700 font-semibold text-base">Reserva para {r.cantidadPersonas} persona{r.cantidadPersonas > 1 ? 's' : ''} ({tipoLabel})</div>
                     <div className="text-sm text-primary-900">Estado: <span className={`font-semibold px-2 py-1 rounded ${estadoColor}`}>{r.estado.charAt(0).toUpperCase() + r.estado.slice(1)}</span></div>
-                    <div className="text-sm text-secondary-800 mt-1">Tu reserva para {r.cantidadPersonas} persona{r.cantidadPersonas > 1 ? 's' : ''} el {fechaLarga} para {tipoLabel} está <span className="font-semibold">{r.estado}</span>.</div>
+                    <div className="text-sm text-secondary-800 mt-1">Tu reserva para {r.cantidadPersonas} persona{r.cantidadPersonas > 1 ? 's' : ''} el {fechaLargaConAnio} para {tipoLabel} está <span className="font-semibold">{r.estado}</span>.</div>
                     {r.comentarios && <div className="mt-2 text-secondary-700 text-xs italic">Comentario: {r.comentarios}</div>}
                     <div className="mt-2 text-xs text-primary-700 font-medium">{mensaje}</div>
                   </div>
@@ -437,6 +474,7 @@ function Reservas() {
           </>
         )}
       </div>
+      )}   
     </div>
   );
 }

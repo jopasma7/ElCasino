@@ -53,12 +53,19 @@ const Pedidos = () => {
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div>
-          <h2 className="text-2xl font-semibold">Pedidos</h2>
-          <p className="text-sm text-neutral-600">Seguimiento de pedidos realizados</p>
+      <div className="mb-6">
+        <div className="mb-8 w-full">
+          <div className="relative rounded-2xl bg-gradient-to-r from-primary-50 via-white to-primary-100 shadow p-6 mb-2 flex items-center gap-4 border border-primary-100">
+            <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary-100 text-primary-700 text-3xl shadow mr-2">
+              <ClipboardList className="w-9 h-9" />
+            </span>
+            <div>
+              <h2 className="text-3xl font-extrabold text-primary-800 mb-1 drop-shadow-sm tracking-tight">Gestión de Pedidos</h2>
+              <p className="text-primary-700 text-base font-medium">Visualiza, gestiona y actualiza el estado de los pedidos realizados en tu restaurante.</p>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 justify-end w-full mb-2">
           <select
             className="input-field"
             value={statusFilter}

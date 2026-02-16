@@ -1,8 +1,14 @@
+
+
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { reservasAPI } from '../../services/api';
-
+import { reservasAPI, usersAPI } from '../../services/api';
 import { BadgeCheck, XCircle, Clock } from 'lucide-react';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+import '../../sweetalert2-custom.css';
+
+const MySwal = withReactContent(Swal);
 
 
 const tipos = {
@@ -18,10 +24,8 @@ const estados = {
 };
 
 function GestionReservas() {
-  // Eliminado filtro de estado
   const [reservas, setReservas] = useState([]);
   const [loading, setLoading] = useState(true);
-  // Calendario personalizado
   const [month, setMonth] = useState(new Date().getMonth());
   const [year, setYear] = useState(new Date().getFullYear());
   const [selectedDate, setSelectedDate] = useState('');
@@ -30,12 +34,26 @@ function GestionReservas() {
     cantidadPersonas: 2,
     tipo: 'comida',
     comentarios: '',
-    fechaReserva: ''
+    fechaReserva: '',
+    userId: ''
   });
+  const [usuarios, setUsuarios] = useState([]);
 
   useEffect(() => {
     fetchReservas();
+    fetchUsuarios();
   }, []);
+
+  const fetchUsuarios = async () => {
+    try {
+      // Trae hasta 1000 usuarios existentes
+      const res = await usersAPI.getAll({ pageSize: 1000 });
+      // res.data.users es el array de usuarios
+      setUsuarios(Array.isArray(res.data?.users) ? res.data.users : []);
+    } catch {
+      setUsuarios([]);
+    }
+  };
 
   const fetchReservas = async () => {
     setLoading(true);
@@ -61,13 +79,16 @@ function GestionReservas() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <h2 className="text-4xl font-extrabold mb-3 text-primary-700 font-display drop-shadow" tabIndex={0} aria-label="Gestión de Reservas">
-        <span className="inline-block mr-2" aria-hidden="true">🗓️</span>Gestión de Reservas del Restaurante
-      </h2>
-      <div className="mb-8">
-        <p className="text-lg text-primary-800 bg-primary-50 rounded-xl p-4 shadow border border-primary-100 w-full text-left">
-          En esta sección puedes consultar, crear y gestionar todas las reservas realizadas por los clientes. Utiliza el calendario para ver las reservas de cada día, aprobar o rechazar solicitudes y llevar un control eficiente de la ocupación del restaurante.
-        </p>
+      <div className="mb-8 w-full">
+        <div className="relative rounded-2xl bg-gradient-to-r from-primary-50 via-white to-primary-100 shadow p-6 mb-2 flex items-center gap-4 border border-primary-100">
+          <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary-100 text-primary-700 text-3xl shadow mr-2">
+            <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor' className='w-9 h-9'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' /></svg>
+          </span>
+          <div>
+            <h2 className="text-3xl font-extrabold text-primary-800 mb-1 drop-shadow-sm tracking-tight">Gestión de Reservas</h2>
+            <p className="text-primary-700 text-base font-medium">Consulta, crea y gestiona todas las reservas del restaurante de forma visual y eficiente.</p>
+          </div>
+        </div>
       </div>
       <div className="mb-8 flex flex-col md:flex-row md:items-start md:gap-6">
         {/* Bloque profesional a la izquierda */}
@@ -243,7 +264,21 @@ function GestionReservas() {
                 })()}
               </tbody>
             </table>
-            <div className="mt-4 text-sm text-secondary-600">Haz clic en un día para ver/crear reservas</div>
+            {!selectedDate ? (
+              <div className="mt-4 text-sm text-secondary-600 text-center">Haz clic en un día para ver/crear reservas</div>
+            ) : (
+              <div className="flex justify-center mt-4">
+                <button
+                  className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-5 rounded-lg shadow transition focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  style={{ fontSize: '1.1rem' }}
+                  onClick={() => setShowForm(true)}
+                  title="Añadir reserva"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  Añadir reserva
+                </button>
+              </div>
+            )}
           </div>
           </div>
         </div>
@@ -251,13 +286,8 @@ function GestionReservas() {
       </div>
       {selectedDate && (
         <div className="mb-8 relative">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center mb-4">
             <h3 className="text-xl font-semibold text-primary-700">Reservas para {(new Date(selectedDate)).toLocaleDateString('es-ES')}</h3>
-            <button
-              className="btn-primary px-4 py-2 rounded-lg font-bold shadow hover:bg-primary-700 transition"
-              style={{ minWidth: 120 }}
-              onClick={() => setShowForm(true)}
-            >Añadir</button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {reservas
@@ -285,6 +315,12 @@ function GestionReservas() {
                         <span className="font-semibold text-primary-900">{r.cantidadPersonas}</span>
                       </div>
                       {r.comentarios && <div className="text-sm text-neutral-600 mt-2 italic border-l-4 border-primary-200 pl-3">{r.comentarios}</div>}
+                      {/* Texto descriptivo según estado */}
+                      <div className="text-[15px] text-primary-700 mt-2 mb-1">
+                        {r.estado === 'aprobada' && '¡Reserva aprobada! El cliente recibirá confirmación y le esperamos ese día.'}
+                        {r.estado === 'pendiente' && 'Reserva pendiente de aprobación. Puedes aprobarla o rechazarla.'}
+                        {r.estado === 'rechazada' && 'Reserva rechazada. El cliente ha sido notificado.'}
+                      </div>
                       {r.estado === 'pendiente' && (
                         <div className="flex gap-2 mt-4">
                           <button
@@ -297,6 +333,43 @@ function GestionReservas() {
                           >Rechazar</button>
                         </div>
                       )}
+                      {r.estado === 'aprobada' && (
+                        <div className="flex gap-2 mt-4">
+                          <button
+                            className="btn-secondary"
+                            style={{ minWidth: 120 }}
+                            onClick={async () => {
+                              const result = await MySwal.fire({
+                                title: '<span style="color:#a66a06;font-weight:bold">¿Cancelar reserva?</span>',
+                                html: '<div style="color:#444">¿Seguro que quieres cancelar esta reserva?<br><b>Esta acción no se puede deshacer.</b><br><br>El usuario recibirá una alerta avisándole que su reserva ha sido cancelada.</div>',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                focusCancel: true,
+                                confirmButtonColor: '#a66a06',
+                                cancelButtonColor: '#d33',
+                                confirmButtonText: '<b>Confirmar</b>',
+                                cancelButtonText: 'Volver',
+                                customClass: {
+                                  popup: 'swal2-rounded swal2-shadow',
+                                  confirmButton: 'swal2-confirm-custom',
+                                  cancelButton: 'swal2-cancel-custom'
+                                },
+                                buttonsStyling: false
+                              });
+                              if (!result.isConfirmed) return;
+                              try {
+                                await reservasAPI.deleteAdmin(r.id);
+                                toast.success('Reserva cancelada');
+                                fetchReservas();
+                              } catch {
+                                toast.error('Error al cancelar la reserva');
+                              }
+                            }}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))
               )}
@@ -305,14 +378,25 @@ function GestionReservas() {
       )}
       {/* Modal para crear reserva */}
       {showForm && selectedDate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border border-primary-200 relative animate-fade-in">
-            <button
-              className="absolute top-3 right-3 text-primary-700 hover:text-red-600 text-2xl font-bold"
-              onClick={() => setShowForm(false)}
-              aria-label="Cerrar"
-            >×</button>
-            <h3 className="text-xl font-semibold mb-4 text-primary-700">Crear nueva reserva para {(new Date(selectedDate)).toLocaleDateString('es-ES')}</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all animate-fade-in">
+          <div className="bg-gradient-to-br from-primary-50 via-white to-primary-100 rounded-3xl shadow-2xl p-0 max-w-lg w-full border border-primary-200 relative overflow-hidden">
+            {/* Header con icono y botón cerrar */}
+            <div className="flex items-center justify-between px-8 pt-7 pb-3 border-b border-primary-100 bg-gradient-to-r from-primary-700/90 to-primary-600/90">
+              <div className="flex flex-col gap-0.5 items-start">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-primary-100 text-primary-700 text-2xl shadow"><svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor' className='w-7 h-7'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' /></svg></span>
+                  <h3 className="text-2xl font-bold text-primary-50 drop-shadow">Crear nueva reserva</h3>
+                </div>
+                <p className="text-primary-100 text-sm mt-1 ml-1">Selecciona el usuario, la fecha y los detalles de la reserva a crear.</p>
+              </div>
+              <button
+                className="text-primary-100 hover:text-red-300 text-3xl font-bold focus:outline-none focus:ring-2 focus:ring-red-400 rounded-full px-2 transition"
+                onClick={() => setShowForm(false)}
+                aria-label="Cerrar"
+                tabIndex={0}
+              >×</button>
+            </div>
+            {/* Formulario */}
             <form
               onSubmit={async e => {
                 e.preventDefault();
@@ -321,36 +405,51 @@ function GestionReservas() {
                     fechaReserva: form.fechaReserva,
                     cantidadPersonas: form.cantidadPersonas,
                     tipo: form.tipo,
-                    comentarios: form.comentarios
-                  });
+                    comentarios: form.comentarios,
+                    userId: form.userId
+                  }, true); // true = admin
                   toast.success('Reserva creada correctamente');
-                  setForm({ cantidadPersonas: 2, tipo: 'comida', comentarios: '', fechaReserva: form.fechaReserva });
+                  setForm({ cantidadPersonas: 2, tipo: 'comida', comentarios: '', fechaReserva: form.fechaReserva, userId: '' });
                   fetchReservas();
                   setShowForm(false);
                 } catch {
                   toast.error('Error al crear reserva');
                 }
               }}
-              className=""
+              className="px-8 py-7"
             >
-              <div className="mb-4">
-                <label className="block mb-2 font-medium">Cantidad de personas</label>
+              <div className="mb-5">
+                <label className="block mb-2 font-semibold text-primary-700">Usuario</label>
+                <select
+                  value={form.userId}
+                  onChange={e => setForm(f => ({ ...f, userId: e.target.value }))}
+                  className="w-full border border-primary-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-400 text-primary-800 bg-white shadow-sm"
+                  required
+                >
+                  <option value="">Selecciona un usuario...</option>
+                  {(Array.isArray(usuarios) ? usuarios : []).map(u => (
+                    <option key={u.id} value={u.id}>{u.name || u.email}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="mb-5">
+                <label className="block mb-2 font-semibold text-primary-700">Cantidad de personas</label>
                 <input
                   type="number"
                   min={1}
                   max={20}
                   value={form.cantidadPersonas}
                   onChange={e => setForm(f => ({ ...f, cantidadPersonas: Number(e.target.value) }))}
-                  className="input"
+                  className="w-full border border-primary-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-400 text-primary-800 bg-white shadow-sm"
                   required
                 />
               </div>
-              <div className="mb-4">
-                <label className="block mb-2 font-medium">Tipo de comida</label>
+              <div className="mb-5">
+                <label className="block mb-2 font-semibold text-primary-700">Tipo de comida</label>
                 <select
                   value={form.tipo}
                   onChange={e => setForm(f => ({ ...f, tipo: e.target.value }))}
-                  className="input"
+                  className="w-full border border-primary-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-400 text-primary-800 bg-white shadow-sm"
                   required
                 >
                   {Object.entries(tipos).map(([value, label]) => (
@@ -358,26 +457,29 @@ function GestionReservas() {
                   ))}
                 </select>
               </div>
-              <div className="mb-4">
-                <label className="block mb-2 font-medium">Comentarios</label>
+              <div className="mb-7">
+                <label className="block mb-2 font-semibold text-primary-700">Comentarios</label>
                 <textarea
                   value={form.comentarios}
                   onChange={e => setForm(f => ({ ...f, comentarios: e.target.value }))}
-                  className="input"
+                  className="w-full border border-primary-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-400 text-primary-800 bg-white shadow-sm"
                   rows={3}
+                  placeholder="¿Alguna petición especial?"
                 />
               </div>
-              <button type="submit" className="btn-primary w-full">Crear reserva</button>
+              <button type="submit" className="w-full bg-gradient-to-r from-primary-700 via-primary-600 to-primary-800 hover:from-primary-800 hover:to-primary-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-lg transition border-2 border-primary-500/40 text-lg flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-400">
+                <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor' className='w-6 h-6'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' /></svg>
+                Crear reserva
+              </button>
             </form>
           </div>
-          {/* Animación modal */}
           <style>{`
             .animate-fade-in {
-              animation: fadeInModal 0.25s ease;
+              animation: fadeInModal 0.25s cubic-bezier(.4,1.6,.6,1);
             }
             @keyframes fadeInModal {
-              from { opacity: 0; transform: scale(0.97); }
-              to { opacity: 1; transform: scale(1); }
+              from { opacity: 0; transform: scale(0.97) translateY(20px); }
+              to { opacity: 1; transform: scale(1) translateY(0); }
             }
           `}</style>
         </div>

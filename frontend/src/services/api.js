@@ -110,11 +110,13 @@ export const ordersAPI = {
 
 // Reservas API
 export const reservasAPI = {
-  create: (data) => api.post('/reservas', data),
+  create: (data, isAdmin = false) => isAdmin ? api.post('/reservas/admin', data) : api.post('/reservas', data),
   getMis: () => api.get('/reservas/mis'),
   getAll: () => api.get('/reservas'),
   updateEstado: (id, estado) => api.put(`/reservas/${id}`, { estado }),
-  update: (id, data) => api.put(`/reservas/mis/${id}`, data) // ahora usa el endpoint de usuario
+  update: (id, data) => api.put(`/reservas/mis/${id}`, data),
+  delete: (id) => api.delete(`/reservas/mis/${id}`),
+  deleteAdmin: (id) => api.delete(`/reservas/${id}`)
 }
 
 export default api

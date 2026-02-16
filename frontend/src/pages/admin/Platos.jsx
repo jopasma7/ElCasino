@@ -301,9 +301,19 @@ const Platos = () => {
 
 	return (
 		<div>
-			<div className="flex justify-between items-center mb-6 gap-2 flex-wrap">
-				<h2 className="text-2xl font-semibold">Platos de la Carta</h2>
-				<div className="flex gap-2">
+			<div className="mb-6">
+				<div className="mb-8 w-full">
+					<div className="relative rounded-2xl bg-gradient-to-r from-primary-50 via-white to-primary-100 shadow p-6 mb-2 flex items-center gap-4 border border-primary-100">
+						<span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary-100 text-primary-700 text-3xl shadow mr-2">
+							<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor' className='w-9 h-9'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 6h16M4 10h16M4 14h16M4 18h16' /></svg>
+						</span>
+						<div>
+							<h2 className="text-3xl font-extrabold text-primary-800 mb-1 drop-shadow-sm tracking-tight">Gestión de Platos</h2>
+							<p className="text-primary-700 text-base font-medium">Administra, añade o edita los platos del menú de tu restaurante de forma sencilla y visual.</p>
+						</div>
+					</div>
+				</div>
+				<div className="flex gap-2 justify-end w-full mb-2">
 					<button
 						onClick={() => setShowCategoryModal(true)}
 						className="btn-secondary flex items-center gap-2"

@@ -95,7 +95,17 @@ function InfoRestaurante() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <h2 className="text-4xl font-extrabold mb-6 text-primary-700 font-display drop-shadow" tabIndex={0} aria-label="Información del Restaurante">Información del Restaurante</h2>
+      <div className="mb-8 w-full">
+        <div className="relative rounded-2xl bg-gradient-to-r from-primary-50 via-white to-primary-100 shadow p-6 mb-2 flex items-center gap-4 border border-primary-100">
+          <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary-100 text-primary-700 text-3xl shadow mr-2">
+            <Info className="w-9 h-9" />
+          </span>
+          <div>
+            <h2 className="text-3xl font-extrabold text-primary-800 mb-1 drop-shadow-sm tracking-tight">Información del Restaurante</h2>
+            <p className="text-primary-700 text-base font-medium">Consulta y edita los datos clave de tu restaurante para mantenerlos siempre actualizados.</p>
+          </div>
+        </div>
+      </div>
       <div className="w-full flex justify-center mb-4">
         <span className="inline-block bg-yellow-200 text-yellow-900 font-semibold px-4 py-2 rounded-lg shadow animate-pulse">Próximamente: edición y guardado real de la información</span>
       </div>

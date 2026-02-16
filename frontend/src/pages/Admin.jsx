@@ -10,7 +10,7 @@ import GestionReservas from './admin/GestionReservas';
 import InfoRestaurante from './admin/InfoRestaurante';
 
 const Admin = () => {
-  const [activeTab, setActiveTab] = useState('info')
+  const [activeTab, setActiveTab] = useState('dishes')
   const { isAdmin, loading: adminLoading } = useAdmin()
 
   if (adminLoading) {
