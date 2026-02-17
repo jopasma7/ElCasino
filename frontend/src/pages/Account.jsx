@@ -267,27 +267,27 @@ const Account = () => {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.15),transparent_55%),linear-gradient(120deg,#1f2937,transparent_60%),linear-gradient(60deg,#0f172a,#1f2937)]" />
         <div className="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1600&auto=format&fit=crop')] bg-cover bg-center" />
-        <div className="relative z-10 container mx-auto px-4 py-14">
+        <div className="relative z-10 container mx-auto px-2 sm:px-4 py-8 sm:py-14">
           <div className="max-w-3xl">
-            <span className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.2em] text-primary-200">
+            <span className="inline-flex items-center gap-2 text-xs sm:text-sm uppercase tracking-[0.2em] text-primary-200">
               El Casino Members
             </span>
-            <h1 className="mt-4 text-4xl md:text-6xl font-display font-bold">
+            <h1 className="mt-3 text-2xl xs:text-3xl md:text-4xl custom-lg:text-5xl font-display font-bold">
               Tu espacio privado para reservar con estilo
             </h1>
-            <p className="mt-4 text-lg text-neutral-200">
+            <p className="mt-3 text-base sm:text-lg text-neutral-200">
               Gestiona tu perfil, guarda tus preferencias y acelera tus pedidos.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto py-8 px-4">
-        <div className="bg-white/95 text-neutral-900 rounded-3xl shadow-2xl border border-white/40 backdrop-blur-lg p-6 md:p-10">
+      <div className="container mx-auto py-4 xs:py-6 sm:py-8 px-2 xs:px-4">
+        <div className="bg-white/95 text-neutral-900 rounded-2xl sm:rounded-3xl shadow-2xl border border-white/40 backdrop-blur-lg p-3 xs:p-4 sm:p-6 md:p-10">
 
         {isAuthenticated ? (
-          <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8">
-            <div className="rounded-2xl bg-neutral-900 text-white p-6 shadow-xl">
+          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] custom-lg:grid-cols-[320px_1fr] gap-6 md:gap-10 custom-lg:gap-12">
+            <div className="rounded-2xl bg-neutral-900 text-white p-4 md:p-6 custom-lg:p-8 shadow-xl mb-4 md:mb-0">
               <div className="flex flex-col items-center text-center">
                 {profile?.role === 'Administrador' && (
                   <div className="flex justify-center mb-4">
@@ -325,13 +325,13 @@ const Account = () => {
               </div>
             </div>
 
-            <div>
+            <div className="min-w-0">
               {/* Tabs */}
-              <div className="flex gap-2 mb-6">
+              <div className="flex flex-wrap gap-2 mb-4 md:mb-6 custom-lg:mb-8">
                 {tabs.map(tab => (
                   <button
                     key={tab.key}
-                    className={`px-4 py-2 rounded-lg font-semibold ${activeTab === tab.key ? 'bg-primary-600 text-white' : 'bg-neutral-200 text-neutral-700'}`}
+                    className={`px-3 xs:px-4 md:px-5 py-2 md:py-2.5 rounded-lg font-semibold text-sm md:text-base custom-lg:text-lg ${activeTab === tab.key ? 'bg-primary-600 text-white' : 'bg-neutral-200 text-neutral-700'}`}
                     onClick={() => setActiveTab(tab.key)}
                     type="button"
                   >
@@ -371,8 +371,8 @@ const Account = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="rounded-2xl bg-white p-6 md:p-8 shadow-xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 custom-lg:gap-12">
+                <div className="rounded-2xl bg-white p-4 md:p-6 custom-lg:p-8 shadow-xl">
                 <h3 className="text-2xl font-semibold mb-2">Iniciar Sesión</h3>
                 <p className="text-sm text-neutral-500 mb-6">Accede con tu email y contraseña.</p>
                 <form onSubmit={handleLogin} className="space-y-4">
@@ -406,7 +406,7 @@ const Account = () => {
                   </button>
                 </form>
               </div>
-              <div className="rounded-2xl bg-white p-6 md:p-8 shadow-xl">
+              <div className="rounded-2xl bg-white p-4 md:p-6 custom-lg:p-8 shadow-xl">
                 <h3 className="text-2xl font-semibold mb-2">Crear Cuenta</h3>
                 <p className="text-sm text-neutral-500 mb-6">Un perfil te permite repetir pedidos y guardar tus datos.</p>
                 <form onSubmit={handleRegister} className="space-y-4">

@@ -295,33 +295,27 @@ const TPV = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Cabecera */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold">TPV - Terminal Punto de Venta</h1>
+      {/* Cabecera y controles */}
+      <div className="mb-8 flex flex-col md:flex-row md:items-center md:gap-4">
+        <div className="flex items-center gap-4 flex-1">
+          <button
+            className="btn-primary px-6 py-2 text-lg"
+            onClick={() => setPlatosOpen(v => !v)}
+          >
+            {platosOpen ? 'Ocultar platos' : 'Mostrar platos'}
+          </button>
+          <select className="input-field w-32" value={mesa} onChange={e => handleMesaChange(Number(e.target.value))}>
+            {Array.from({length: 10}, (_, i) => (
+              <option key={i+1} value={i+1}>Mesa {i+1}</option>
+            ))}
+          </select>
         </div>
-          {/* Botones de acción eliminados, ahora solo están en la tarjeta de ticket */}
-      </div>
-
-      {/* Botón para colapsar/expandir todos los platos y filtro de mesa */}
-      <div className="mb-4 flex items-center gap-4">
-        <button
-          className="btn-primary px-6 py-2 text-lg"
-          onClick={() => setPlatosOpen(v => !v)}
-        >
-          {platosOpen ? 'Ocultar platos' : 'Mostrar platos'}
-        </button>
-        <select className="input-field w-32" value={mesa} onChange={e => handleMesaChange(Number(e.target.value))}>
-          {Array.from({length: 10}, (_, i) => (
-            <option key={i+1} value={i+1}>Mesa {i+1}</option>
-          ))}
-        </select>
+        <h1 className="text-3xl font-bold whitespace-nowrap mt-4 md:mt-0">TPV - Terminal Punto de Venta</h1>
       </div>
       {/* Zona central mejorada */}
-      <div className={`grid ${platosOpen ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1'} gap-8 h-[70vh]`}>
-        {/* Columna izquierda: productos */}
-        {platosOpen && (
-          <div className="md:col-span-2 flex flex-col h-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-[70vh]">
+        {/* Columna izquierda: filtros y productos */}
+        <div className="flex flex-col h-full w-full">
             {/* Filtros de búsqueda y categoría dentro del panel colapsable */}
             <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
               <input
@@ -339,7 +333,7 @@ const TPV = () => {
               </select>
             </div>
             {/* Listado de productos colapsable */}
-            <div className="flex-1 overflow-y-auto pr-1">
+            <div className="flex-1 pr-1 max-h-[400px] overflow-y-auto">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {loadingProducts ? (
                   <div className="col-span-full text-center py-8">Cargando productos...</div>
@@ -350,8 +344,13 @@ const TPV = () => {
                       (!search || dish.name.toLowerCase().includes(search.toLowerCase()))
                     )
                     .map((dish) => (
-                      <div key={dish.id} className="bg-white rounded-xl shadow flex flex-col items-stretch p-0 overflow-hidden border-2 transition-all duration-150"
-                        style={dish.customOptions && dish.customOptions.length > 0 ? { borderColor: '#f59e42' } : {}}>
+                      <div
+                        key={dish.id}
+                        className="bg-white rounded-xl shadow flex flex-col items-stretch p-0 overflow-hidden border-2 transition-all duration-150 cursor-pointer hover:shadow-lg active:scale-95"
+                        style={dish.customOptions && dish.customOptions.length > 0 ? { borderColor: '#f59e42' } : {}}
+                        onClick={() => handleAdd(dish)}
+                        title="Añadir al ticket"
+                      >
                         <div className="w-full h-28 bg-neutral-100 flex items-center justify-center">
                           {dish.image ? (
                             <img src={dish.image} alt={dish.name} className="w-full h-full object-cover" />
@@ -359,16 +358,11 @@ const TPV = () => {
                             <span className="text-3xl font-bold text-primary-600">🍽️</span>
                           )}
                         </div>
-                        <div className="font-semibold mb-1 text-center text-base px-4 pt-2 flex items-center justify-center gap-2">
+                        <div className="font-semibold mb-3 text-center text-base px-4 pt-2 flex items-center justify-center gap-2">
                           {dish.name}
                           {dish.customOptions && dish.customOptions.length > 0 && (
                             <span title="Este plato tiene opciones personalizables" className="text-orange-500 text-lg">★</span>
                           )}
-                        </div>
-                        <div className="flex justify-center w-full mb-3 px-4">
-                          <button className="btn-primary w-full py-1 text-sm" onClick={() => handleAdd(dish)}>
-                            Añadir
-                          </button>
                         </div>
                       </div>
                     ))
@@ -376,13 +370,12 @@ const TPV = () => {
               </div>
             </div>
           </div>
-        )}
         {/* Columna derecha: ticket con scroll y cabecera fija */}
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full w-full">
           <div
-  className={`bg-white rounded-2xl shadow-lg p-8 mb-8 flex flex-col relative text-base w-full ${platosOpen ? 'max-w-[520px] min-w-[420px] max-h-[600px] h-[85%]' : ''}`}
-  style={{ fontSize: '1.08rem' }}
->
+            className={`bg-white rounded-2xl shadow-lg p-4 mb-8 flex flex-col relative text-base w-full h-full max-w-full overflow-x-auto`}
+            style={{ fontSize: '1.08rem' }}
+          >
             {/* Botones de acción en la esquina superior derecha, posición absoluta */}
             <div className="absolute top-4 right-4 flex gap-2 z-10">
               <button

@@ -5,6 +5,10 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    screens: {
+      'custom-lg': '1040px',
+      ...require('tailwindcss/defaultTheme').screens,
+    },
     extend: {
       colors: {
         primary: {

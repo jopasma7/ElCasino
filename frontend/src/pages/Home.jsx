@@ -46,7 +46,7 @@ const Home = () => {
   return (
     <div className="bg-white">
       {/* Hero Section Mejorado */}
-      <section className="relative min-h-[70vh] md:h-[600px] flex items-center overflow-hidden pt-14 sm:pt-0">
+      <section className="relative min-h-[70vh] md:h-[700px] flex items-center overflow-hidden pt-14 sm:pt-0">
         {/* Background Image con overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary-900 via-primary-800 to-primary-700">
           <div className="absolute inset-0 opacity-40" style={{
