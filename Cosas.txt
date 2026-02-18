@@ -1,3 +1,9 @@
 - Sección de Reservas.
 - Pedidos más amplios.
 - Puntos de Recompensa.
+
+
+El primer ajuste que quiero realizar es añadir tabs a esa página.
+Una tab será la que ahora está (Pedidos) y otra tab será Vista Previa.
+Separamelo en dos archivos dentro de pages/admin/pedidos/Pedidos.jsx y VistaPrevia.jsx
+

@@ -10,18 +10,29 @@ import { userProfileAPI } from '../services/api'
 import { config } from '../config'
 
 const TPV = () => {
-    // Estado para expandir el ticket
-    const [ticketExpand, setTicketExpand] = useState(false);
-  const socketRef = useRef(null)
+  // TODOS LOS HOOKS DEBEN IR AL PRINCIPIO
+  const [ticketExpand, setTicketExpand] = useState(false);
+  const socketRef = useRef(null);
   const [cobroOpen, setCobroOpen] = useState(false);
-  // Estado para colapsar/expandir todos los platos
   const [platosOpen, setPlatosOpen] = useState(true);
-      const [mesa, setMesa] = useState(1)
-      const [ticket, setTicket] = useState([])
-      const [ticketsPorMesa, setTicketsPorMesa] = useState(Array(10).fill([]))
-      const [ticketNamesPorMesa, setTicketNamesPorMesa] = useState(Array(10).fill('Ticket'))
-      const [ticketName, setTicketName] = useState(`Ticket Mesa 1`)
-      const [editingName, setEditingName] = useState(false)
+  const [mesa, setMesa] = useState(1);
+  const [ticket, setTicket] = useState([]);
+  const [ticketsPorMesa, setTicketsPorMesa] = useState(Array(10).fill([]));
+  const [ticketNamesPorMesa, setTicketNamesPorMesa] = useState(Array(10).fill('Ticket'));
+  const [ticketName, setTicketName] = useState(`Ticket Mesa 1`);
+  const [editingName, setEditingName] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [pendingUpdate, setPendingUpdate] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalDish, setModalDish] = useState(null);
+  const { isAdmin, loading } = useAdmin();
+  const [dishes, setDishes] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  // Estado para mostrar el modal de impresión
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
       // Cambiar de mesa y cargar su ticket
       const handleMesaChange = async (num) => {
@@ -138,8 +149,7 @@ const TPV = () => {
       }, [mesa])
 
       // Emitir ticket actualizado al backend y guardar en DB
-      const [isUpdating, setIsUpdating] = useState(false);
-      const [pendingUpdate, setPendingUpdate] = useState(null);
+      // ...existing code...
       const emitTicketUpdate = async (ticketData = null) => {
         const data = ticketData || { mesa, ticket, ticketName };
         if (isUpdating) {
@@ -185,8 +195,7 @@ const TPV = () => {
 
     // Añadir producto al ticket
       // Modal para customOptions
-      const [modalOpen, setModalOpen] = useState(false);
-      const [modalDish, setModalDish] = useState(null);
+      // ...existing code...
 
       // Añadir producto al ticket (con soporte para customOptions)
       const handleAdd = (dish) => {
@@ -258,12 +267,7 @@ const TPV = () => {
 
     // Calcular total
     const total = ticket.reduce((sum, item) => sum + item.price * item.cantidad, 0)
-  const { isAdmin, loading } = useAdmin()
-  const [dishes, setDishes] = useState([])
-  const [categories, setCategories] = useState([])
-  const [loadingProducts, setLoadingProducts] = useState(true)
-  const [search, setSearch] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('')
+  // ...existing code...
 
   useEffect(() => {
     const fetchData = async () => {
@@ -294,44 +298,87 @@ const TPV = () => {
   if (!isAdmin) return <Navigate to="/" replace />
 
   // Función para imprimir el ticket en formato sencillo
+  // Estado para mostrar el modal de impresión
+  // ...existing code...
+  // Llama a esta función para mostrar el modal
   const handlePrintTicket = () => {
-    // Crear contenido HTML para el ticket
+    setShowPrintModal(true);
+  };
+
+  // Función que realmente imprime, según si se muestran precios o no
+  const doPrintTicket = (showPrices) => {
     const ticketHtml = `
       <html>
       <head>
         <title>Ticket</title>
         <style>
-          body { font-family: monospace; font-size: 12px; margin: 0; padding: 10px; }
-          .ticket-header { text-align: center; font-weight: bold; margin-bottom: 10px; }
-          .ticket-line { display: flex; justify-content: space-between; margin-bottom: 2px; }
-          .ticket-total { border-top: 1px dashed #000; margin-top: 8px; padding-top: 4px; font-weight: bold; }
+          body {
+            font-family: monospace;
+            font-size: 14px;
+            margin: 0;
+            padding: 0;
+            width: 58mm;
+            max-width: 58mm;
+            background: #fff;
+          }
+          .ticket-container {
+            width: 58mm;
+            max-width: 58mm;
+            margin: 0 auto;
+            padding: 4mm 2mm 2mm 2mm;
+          }
+          .ticket-header { text-align: center; font-weight: bold; margin-bottom: 8px; font-size: 16px; text-decoration: underline; }
+          .ticket-line { display: flex; justify-content: space-between; margin-bottom: 2px; font-size: 14px; }
+          .ticket-total { border-top: 1px dashed #000; margin-top: 8px; padding-top: 4px; font-weight: bold; font-size: 15px; }
+          .print-btn { display: block; margin: 16px auto 0 auto; padding: 8px 24px; font-size: 15px; background: #16a34a; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+          .close-btn { display: block; margin: 10px auto 0 auto; padding: 6px 18px; font-size: 14px; background: #e11d48; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+          @media print {
+            html, body {
+              width: 58mm !important;
+              max-width: 58mm !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              background: #fff !important;
+            }
+            .ticket-container {
+              width: 58mm !important;
+              max-width: 58mm !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+            .print-btn, .close-btn { display: none !important; }
+          }
         </style>
       </head>
       <body>
-        <div class="ticket-header">${ticketName}</div>
-        <div>
-          ${ticket.map(item => `
-            <div class="ticket-line">
-              <span>${item.cantidad} x ${item.name}</span>
-              <span>€${(item.price * item.cantidad).toFixed(2)}</span>
-            </div>
-            ${item.selectedOptions && item.selectedOptions.length > 0 ? item.selectedOptions.map(opt => opt.options && opt.options.length > 0 ? `<div style='font-size:10px; margin-left:10px;'>${opt.type}: ${opt.options.join(', ')}</div>` : '').join('') : ''}
-          `).join('')}
+        <div class="ticket-container">
+          <div class="ticket-header">${ticketName}</div>
+          <div>
+            ${ticket.map(item => `
+              <div class="ticket-line">
+                <span>${item.cantidad} x ${item.name}</span>
+                ${showPrices ? `<span>€${(item.price * item.cantidad).toFixed(2)}</span>` : ''}
+              </div>
+              ${item.selectedOptions && item.selectedOptions.length > 0 ? item.selectedOptions.map(opt => opt.options && opt.options.length > 0 ? `
+                <div style='font-size:13px; margin-left:10px;'>${opt.type}:<ul style='margin:0 0 4px 12px; padding:0;'>
+                  ${opt.options.map(option => `<li style='list-style-type:disc; margin-left:8px;'>${option}</li>`).join('')}
+                </ul></div>
+              ` : '').join('') : ''}
+            `).join('')}
+          </div>
+          ${showPrices ? `<div class="ticket-total">TOTAL: €${total.toFixed(2)}</div>` : ''}
+          <div style="text-align:center; margin-top:10px;">¡Gracias!</div>
+          <button class="print-btn" onclick="window.print()">Imprimir</button>
+          <button class="close-btn" onclick="window.close()">Cerrar</button>
         </div>
-        <div class="ticket-total">TOTAL: €${total.toFixed(2)}</div>
-        <div style="text-align:center; margin-top:10px;">¡Gracias!</div>
       </body>
       </html>
     `;
-    // Abrir ventana emergente y lanzar impresión
     const printWindow = window.open('', '', 'width=300,height=600');
     printWindow.document.write(ticketHtml);
     printWindow.document.close();
     printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 300);
+    setShowPrintModal(false);
   };
 
   return (
@@ -429,11 +476,40 @@ const TPV = () => {
               {/* Botón imprimir ticket */}
               <button
                 className="rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg w-10 h-10 flex items-center justify-center text-lg transition-all duration-200"
-                onClick={() => handlePrintTicket()}
+                onClick={handlePrintTicket}
                 title="Imprimir ticket"
               >
-                <span role="img" aria-label="Imprimir">🖨️</span>
+                {/* Icono SVG de impresora para máxima compatibilidad */}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+                  <path d="M6 19v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2h2a1 1 0 0 0 1-1v-7a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v7a1 1 0 0 0 1 1h2zm2 2v-4h8v4H8zm10-2v-2a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v2H4v-7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v7h-2zm-1-14V3a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v2h10zm-2-2v2H8V3h8z"/>
+                </svg>
               </button>
+                          {/* Modal para elegir impresión con/sin precios */}
+                          {showPrintModal && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                              <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs text-center">
+                                <h2 className="text-lg font-bold mb-4">¿Cómo quieres imprimir el ticket?</h2>
+                                <button
+                                  className="btn-primary w-full mb-3 py-2"
+                                  onClick={() => doPrintTicket(true)}
+                                >
+                                  Imprimir <b>con precios</b>
+                                </button>
+                                <button
+                                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold w-full py-2 rounded mb-2"
+                                  onClick={() => doPrintTicket(false)}
+                                >
+                                  Imprimir <b>sin precios</b>
+                                </button>
+                                <button
+                                  className="text-red-600 mt-2 underline"
+                                  onClick={() => setShowPrintModal(false)}
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            </div>
+                          )}
                     {/* Modal para ticket expandido */}
                     {ticketExpand && (
                       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 pt-36 pb-12">
@@ -599,7 +675,11 @@ const TPV = () => {
                         <button className="px-1 py-1 bg-neutral-100 rounded w-7" onClick={() => handleChangeQty(item.id, -1, item.selectedOptions)}>-</button>
                         <span className="w-7 text-center">{item.cantidad}</span>
                         <button className="px-1 py-1 bg-neutral-100 rounded w-7" onClick={() => handleChangeQty(item.id, 1, item.selectedOptions)}>+</button>
-                        <button className="ml-1 text-red-500 hover:text-red-700 w-7" onClick={() => handleRemove(item.id)}>🗑️</button>
+                        <button className="ml-1 text-red-500 hover:text-red-700 w-7 flex items-center justify-center" onClick={() => handleRemove(item.id)} title="Eliminar">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                            <path d="M9 3a1 1 0 0 0-1 1v1H4a1 1 0 1 0 0 2h1v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7h1a1 1 0 1 0 0-2h-4V4a1 1 0 0 0-1-1H9zm1 2h4v1h-4V5zm-3 3h10v13H7V8zm2 3a1 1 0 0 1 2 0v7a1 1 0 1 1-2 0v-7zm4 0a1 1 0 0 1 2 0v7a1 1 0 1 1-2 0v-7z"/>
+                          </svg>
+                        </button>
                         <div className="font-semibold text-sm text-right min-w-[60px] ml-2">€{(item.price*item.cantidad).toFixed(2)}</div>
                       </div>
                     </div>

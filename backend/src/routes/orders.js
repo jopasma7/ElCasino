@@ -91,6 +91,66 @@ router.get('/:id', adminAuthMiddleware, async (req, res) => {
   }
 })
 
+// POST - Crear nuevo pedido (admin, sin requerir teléfono)
+router.post('/admin', adminAuthMiddleware, [
+  body('customerName').notEmpty().withMessage('El nombre es requerido'),
+  body('items').isArray({ min: 1 }).withMessage('Debe incluir al menos un item'),
+  body('items.*.dishId').custom((value, { req, path }) => {
+    if (req.body.isDailyMenu && (!value || value === '')) {
+      return true;
+    }
+    if (!value || value === '') {
+      throw new Error('Dish ID es requerido');
+    }
+    return true;
+  }),
+  body('items.*.quantity').isInt({ min: 1 }).withMessage('La cantidad debe ser mayor a 0')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    const {
+      customerName,
+      items,
+      isDailyMenu,
+      status,
+      type
+    } = req.body;
+    // Procesar items y crear pedido
+    let subtotal = 0;
+    const orderItems = items.map(item => ({
+      dishName: item.dishName,
+      quantity: item.quantity,
+      price: 0
+    }));
+    const order = await prisma.order.create({
+      data: {
+        customerName,
+        customerPhone: '000000000',
+        status: 'confirmed',
+        type: type || 'takeaway',
+        subtotal: 0,
+        total: 0,
+        customerAddress: '',
+        notes: '',
+        // price eliminado, solo subtotal y total
+        items: {
+          create: orderItems
+        }
+      },
+      include: {
+        items: true
+      }
+    });
+    res.status(201).json(order);
+  } catch (error) {
+    console.error('Error al crear pedido (admin):', error);
+    res.status(500).json({ error: 'Error al crear pedido (admin)' });
+  }
+});
+
 // POST - Crear nuevo pedido (público)
 router.post('/',
   optionalUserAuthMiddleware,
@@ -114,9 +174,11 @@ router.post('/',
   ],
   async (req, res) => {
     try {
-      const errors = validationResult(req)
+      console.log('Pedido recibido:', JSON.stringify(req.body, null, 2));
+      const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        console.error('Errores de validación:', errors.array());
+        return res.status(400).json({ errors: errors.array() });
       }
 
       const {
@@ -218,8 +280,12 @@ router.post('/',
 
       res.status(201).json(order)
     } catch (error) {
-      console.error('Error al crear pedido:', error)
-      res.status(500).json({ error: 'Error al crear pedido' })
+      console.error('Error al crear pedido:', error);
+      if (error instanceof Error) {
+        res.status(500).json({ error: error.message, stack: error.stack });
+      } else {
+        res.status(500).json({ error: 'Error al crear pedido', details: error });
+      }
     }
   }
 )
