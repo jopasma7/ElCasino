@@ -293,6 +293,47 @@ const TPV = () => {
   if (loading) return <div className="text-center py-12">Cargando...</div>
   if (!isAdmin) return <Navigate to="/" replace />
 
+  // Función para imprimir el ticket en formato sencillo
+  const handlePrintTicket = () => {
+    // Crear contenido HTML para el ticket
+    const ticketHtml = `
+      <html>
+      <head>
+        <title>Ticket</title>
+        <style>
+          body { font-family: monospace; font-size: 12px; margin: 0; padding: 10px; }
+          .ticket-header { text-align: center; font-weight: bold; margin-bottom: 10px; }
+          .ticket-line { display: flex; justify-content: space-between; margin-bottom: 2px; }
+          .ticket-total { border-top: 1px dashed #000; margin-top: 8px; padding-top: 4px; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <div class="ticket-header">${ticketName}</div>
+        <div>
+          ${ticket.map(item => `
+            <div class="ticket-line">
+              <span>${item.cantidad} x ${item.name}</span>
+              <span>€${(item.price * item.cantidad).toFixed(2)}</span>
+            </div>
+            ${item.selectedOptions && item.selectedOptions.length > 0 ? item.selectedOptions.map(opt => opt.options && opt.options.length > 0 ? `<div style='font-size:10px; margin-left:10px;'>${opt.type}: ${opt.options.join(', ')}</div>` : '').join('') : ''}
+          `).join('')}
+        </div>
+        <div class="ticket-total">TOTAL: €${total.toFixed(2)}</div>
+        <div style="text-align:center; margin-top:10px;">¡Gracias!</div>
+      </body>
+      </html>
+    `;
+    // Abrir ventana emergente y lanzar impresión
+    const printWindow = window.open('', '', 'width=300,height=600');
+    printWindow.document.write(ticketHtml);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 300);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Cabecera y controles */}
@@ -384,6 +425,14 @@ const TPV = () => {
                 title="Expandir ticket"
               >
                 <span role="img" aria-label="Expandir">⤢</span>
+              </button>
+              {/* Botón imprimir ticket */}
+              <button
+                className="rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg w-10 h-10 flex items-center justify-center text-lg transition-all duration-200"
+                onClick={() => handlePrintTicket()}
+                title="Imprimir ticket"
+              >
+                <span role="img" aria-label="Imprimir">🖨️</span>
               </button>
                     {/* Modal para ticket expandido */}
                     {ticketExpand && (
