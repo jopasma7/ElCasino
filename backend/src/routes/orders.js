@@ -174,7 +174,7 @@ router.post('/',
   ],
   async (req, res) => {
     try {
-      console.log('Pedido recibido:', JSON.stringify(req.body, null, 2));
+      // console.log('Pedido recibido:', JSON.stringify(req.body, null, 2));
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         console.error('Errores de validación:', errors.array());

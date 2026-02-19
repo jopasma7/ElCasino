@@ -103,6 +103,7 @@ export const dailyMenuOptionsAPI = {
 export const ordersAPI = {
   getAll: (params) => api.get('/orders', { params }),
   getById: (id) => api.get(`/orders/${id}`),
+  create: (data) => api.post('/orders', data),
   createAdmin: (data) => api.post('/orders/admin', data),
   updateStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
   cancel: (id) => api.delete(`/orders/${id}`)
