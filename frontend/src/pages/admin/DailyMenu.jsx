@@ -10,8 +10,8 @@ const MySwal = withReactContent(Swal);
 const DailyMenu = () => {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    price: '9.50',
-    completeSingleDishPrice: '8.50',
+    price: '12.00',
+    completeSingleDishPrice: '10.00',
     starters: '',
     mains: '',
     desserts: ''
@@ -35,8 +35,8 @@ const DailyMenu = () => {
       const menu = response.data.menu === undefined ? response.data : response.data.menu;
       if (menu) {
         setFormData({
-          price: menu.price?.toString() || '9.50',
-          completeSingleDishPrice: menu.completeSingleDishPrice?.toString() || '8.50',
+          price: menu.price?.toString() || '12.00',
+          completeSingleDishPrice: menu.completeSingleDishPrice?.toString() || '10.00',
           starters: Array.isArray(menu.starters) ? menu.starters.join('\n') : '',
           mains: Array.isArray(menu.mains) ? menu.mains.join('\n') : '',
           desserts: Array.isArray(menu.desserts) ? menu.desserts.join('\n') : ''

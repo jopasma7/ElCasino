@@ -96,21 +96,28 @@ const VistaPrevia = () => {
           <div className="mt-10">
             <h3 className="text-2xl font-semibold mb-4 text-primary-700">Pedidos detallados</h3>
             <div className="space-y-2">
-              {orders.map(order => (
-                <div key={order.id} className="flex items-center text-sm bg-neutral-50 rounded-lg py-2 px-3 shadow-sm mb-1 border border-neutral-200">
-                  <span className="font-bold mr-3 flex items-center gap-1 text-primary-700">
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="#2563eb" strokeWidth="2"/></svg>
-                    {order.customerName || (order.user && order.user.name) || 'Usuario'}:
-                  </span>
-                  <div className="flex flex-wrap gap-2 overflow-x-auto">
-                    {order.items.map(item => (
-                      <span key={item.id} className="bg-primary-200 text-primary-800 rounded-full px-3 py-1 font-semibold text-xs shadow">
-                        {item.quantity >= 2 ? `${item.quantity}×` : ''}{item.dishName || item.dish?.name || 'Plato eliminado'}
-                      </span>
-                    ))}
-                  </div>
+              {orders.length === 0 ? (
+                <div className="text-neutral-500 py-6">
+                  No hay registros de pedidos detallados para la fecha seleccionada.<br />
+                  Por favor, verifica otra fecha o espera a que se registren nuevos pedidos.
                 </div>
-              ))}
+              ) : (
+                orders.map(order => (
+                  <div key={order.id} className="flex items-center text-sm bg-neutral-50 rounded-lg py-2 px-3 shadow-sm mb-1 border border-neutral-200">
+                    <span className="font-bold mr-3 flex items-center gap-1 text-primary-700">
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="#2563eb" strokeWidth="2"/></svg>
+                      {order.customerName || (order.user && order.user.name) || 'Usuario'}:
+                    </span>
+                    <div className="flex flex-wrap gap-2 overflow-x-auto">
+                      {order.items.map(item => (
+                        <span key={item.id} className="bg-primary-200 text-primary-800 rounded-full px-3 py-1 font-semibold text-xs shadow">
+                          {item.quantity >= 2 ? `${item.quantity}×` : ''}{item.dishName || item.dish?.name || 'Plato eliminado'}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </>
