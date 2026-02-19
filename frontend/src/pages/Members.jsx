@@ -141,7 +141,7 @@ const Members = () => {
                 <div className="text-base sm:text-lg font-semibold text-neutral-900 mb-0.5 sm:mb-1 text-center break-words">{user.name}</div>
                 <div className="text-xs sm:text-sm text-neutral-500 text-center break-words">{user.email}</div>
                 {isAdmin && (
-                  <div className="mt-2 sm:mt-4 flex flex-col sm:flex-row gap-2 w-full">
+                  <div className="mt-2 sm:mt-4 flex flex-col sm:flex-row gap-2 w-full justify-center items-center">
                     <button
                       onClick={() => handleChangeRole(user)}
                       className={`w-full sm:w-auto px-2 sm:px-4 py-1 rounded-lg font-semibold text-xs shadow transition-all duration-150 border focus:outline-none focus:ring-2 focus:ring-yellow-400/60
