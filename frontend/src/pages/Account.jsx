@@ -1,3 +1,5 @@
+import Badge from '../components/Badge';
+import { notificationsAPI } from '../services/notificationsAPI';
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import Swal from 'sweetalert2'
@@ -20,6 +22,7 @@ const Account = () => {
     { key: 'ajustes', label: 'Ajustes' },
     { key: 'notificaciones', label: 'Notificaciones' },
   ];
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // DEBUG: Mostrar el objeto profile en consola para verificar el campo role
   // useEffect(() => {
@@ -57,6 +60,23 @@ const Account = () => {
     if (token) {
       fetchProfile()
       fetchReservas()
+      // Fetch notifications count
+      const fetchNotifications = async () => {
+        try {
+          const res = await notificationsAPI.getAll()
+          const notifications = res.data.notifications || []
+          setUnreadCount(notifications.filter(n => !n.read).length)
+        } catch {}
+      }
+      fetchNotifications()
+
+      // Listen for notification updates
+      const handleNotificationsUpdated = () => fetchNotifications()
+      window.addEventListener('notifications-updated', handleNotificationsUpdated)
+
+      return () => {
+        window.removeEventListener('notifications-updated', handleNotificationsUpdated)
+      }
     } else {
       setLoading(false)
     }
@@ -108,8 +128,15 @@ const Account = () => {
       setIsAuthenticated(true)
       toast.success('Inicio de sesión exitoso')
       window.dispatchEvent(new Event('user-auth-changed'))
-      // ACTUALIZAR RESERVAS AL INICIAR SESIÓN
+      // Actualizar reservas y notificaciones al iniciar sesión
       fetchReservas()
+      // Fetch notifications and update badge
+      try {
+        const res = await notificationsAPI.getAll()
+        const notifications = res.data.notifications || []
+        setUnreadCount(notifications.filter(n => !n.read).length)
+        window.dispatchEvent(new Event('notifications-updated'))
+      } catch {}
     } catch (error) {
       toast.error('Email o contraseña incorrectos')
     } finally {
@@ -142,6 +169,13 @@ const Account = () => {
       setIsAuthenticated(true)
       toast.success('Registro exitoso')
       window.dispatchEvent(new Event('user-auth-changed'))
+      // Actualizar notificaciones al registrar
+      try {
+        const res = await notificationsAPI.getAll()
+        const notifications = res.data.notifications || []
+        setUnreadCount(notifications.filter(n => !n.read).length)
+        window.dispatchEvent(new Event('notifications-updated'))
+      } catch {}
     } catch (error) {
       // Intenta mostrar el mensaje del backend si existe
       const msg = error?.response?.data?.errors?.[0]?.msg || error?.response?.data?.error || 'Error al registrar usuario'
@@ -189,8 +223,11 @@ const Account = () => {
     localStorage.removeItem('token')
     setIsAuthenticated(false)
     setProfile(null)
+    setUnreadCount(0)
+    setReservas([])
     toast.info('Sesión cerrada correctamente')
     window.dispatchEvent(new Event('user-auth-changed'))
+    window.dispatchEvent(new Event('notifications-updated'))
   }
 
   const MySwal = withReactContent(Swal)
@@ -331,11 +368,14 @@ const Account = () => {
                 {tabs.map(tab => (
                   <button
                     key={tab.key}
-                    className={`px-3 xs:px-4 md:px-5 py-2 md:py-2.5 rounded-lg font-semibold text-sm md:text-base custom-lg:text-lg ${activeTab === tab.key ? 'bg-primary-600 text-white' : 'bg-neutral-200 text-neutral-700'}`}
+                    className={`px-3 xs:px-4 md:px-5 py-2 md:py-2.5 rounded-lg font-semibold text-sm md:text-base custom-lg:text-lg relative ${activeTab === tab.key ? 'bg-primary-600 text-white' : 'bg-neutral-200 text-neutral-700'}`}
                     onClick={() => setActiveTab(tab.key)}
                     type="button"
                   >
                     {tab.label}
+                    {tab.key === 'notificaciones' && unreadCount > 0 && (
+                      <Badge count={unreadCount} />
+                    )}
                   </button>
                 ))}
               </div>
@@ -348,6 +388,7 @@ const Account = () => {
                   submitting={submitting}
                   currentAvatar={currentAvatar}
                   setProfileAvatarPreview={setProfileAvatarPreview}
+                  handleLogout={handleLogout}
                 />
               )}
               {activeTab === 'reservas' && (

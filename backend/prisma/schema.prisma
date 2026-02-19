@@ -105,6 +105,8 @@ model User {
   orders       Order[]
   reservas     Reserva[]
 
+  notifications Notification[]
+
   @@map("users")
 }
 
@@ -195,6 +197,22 @@ enum OrderStatus {
   ready
   completed
   cancelled
+}
+
+
+
+
+model Notification {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  title      String
+  message    String
+  type       String
+  date       DateTime @default(now())
+  read       Boolean  @default(false)
+  actionLabel String?
+  actionUrl   String?
 }
 
 

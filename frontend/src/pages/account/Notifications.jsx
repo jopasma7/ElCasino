@@ -1,41 +1,6 @@
-import React, { useState } from 'react';
-
-const mockNotifications = [
-  {
-    id: 1,
-    type: 'reserva',
-    title: 'Reserva confirmada',
-    message: 'Tu reserva para 4 personas el 18/02/2026 a las 21:00 ha sido confirmada.',
-    date: '2026-02-16T12:00:00',
-    read: false,
-    action: { label: 'Ver reserva', url: '/reservas' }
-  },
-  {
-    id: 2,
-    type: 'promocion',
-    title: '¡Nuevo menú degustación!',
-    message: 'Descubre nuestro nuevo menú especial solo este mes. ¡Reserva ya tu mesa!',
-    date: '2026-02-15T10:00:00',
-    read: false,
-    action: { label: 'Ver menú', url: '/menu' }
-  },
-  {
-    id: 3,
-    type: 'cuenta',
-    title: 'Contraseña cambiada',
-    message: 'Tu contraseña se ha actualizado correctamente.',
-    date: '2026-02-10T09:12:00',
-    read: true
-  },
-  {
-    id: 4,
-    type: 'reserva',
-    title: 'Reserva rechazada',
-    message: 'Lamentamos informarte que tu reserva para el 12/02/2026 no pudo ser confirmada.',
-    date: '2026-02-09T18:00:00',
-    read: true
-  }
-];
+import React, { useState, useEffect } from 'react';
+import { notificationsAPI } from '../../services/notificationsAPI';
+import { toast } from 'react-toastify';
 
 const typeIcons = {
   reserva: (
@@ -56,14 +21,54 @@ const typeIcons = {
 };
 
 const NotificationsTab = () => {
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const markAsRead = (id) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      setLoading(true);
+      try {
+        const res = await notificationsAPI.getAll();
+        setNotifications(res.data.notifications || []);
+      } catch {
+        toast.error('Error al cargar notificaciones');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
+  const markAsRead = async (id) => {
+    try {
+      await notificationsAPI.markAsRead(id);
+      setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+      window.dispatchEvent(new Event('notifications-updated'));
+    } catch {
+      toast.error('Error al marcar como leída');
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    try {
+      await Promise.all(
+        notifications.filter(n => !n.read).map(n => notificationsAPI.markAsRead(n.id))
+      );
+      setNotifications(notifications.map(n => ({ ...n, read: true })));
+      window.dispatchEvent(new Event('notifications-updated'));
+    } catch {
+      toast.error('Error al marcar todas como leídas');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await notificationsAPI.delete(id);
+      setNotifications(notifications.filter(n => n.id !== id));
+      window.dispatchEvent(new Event('notifications-updated'));
+    } catch {
+      toast.error('Error al eliminar notificación');
+    }
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -84,39 +89,62 @@ const NotificationsTab = () => {
           </button>
         )}
       </div>
-      <div className="divide-y divide-neutral-200">
-        {notifications.length === 0 && (
+      <div className="divide-y divide-neutral-200" style={notifications.length > 3 ? { maxHeight: '400px', overflowY: 'auto' } : {}}>
+        {loading ? (
+          <div className="py-8 text-center text-neutral-400">Cargando notificaciones...</div>
+        ) : notifications.length === 0 ? (
           <div className="py-8 text-center text-neutral-400">No tienes notificaciones.</div>
-        )}
-        {notifications.map(n => (
-          <div
-            key={n.id}
-            className={`flex items-start gap-2 py-5 transition-colors ${!n.read ? 'bg-primary-50/60' : ''}`}
-          >
-            {typeIcons[n.type]}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className={`font-semibold text-base ${!n.read ? 'text-primary-700' : 'text-neutral-800'}`}>{n.title}</span>
-                {!n.read && <span className="ml-2 px-2 py-0.5 rounded text-xs font-medium bg-primary-200 text-primary-800">Nuevo</span>}
-              </div>
-              <p className="text-neutral-700 text-sm mt-1 mb-1">{n.message}</p>
-              <div className="flex items-center gap-3 text-xs text-neutral-400">
-                <span>{new Date(n.date).toLocaleString('es-ES')}</span>
-                {n.action && (
-                  <a href={n.action.url} className="btn-secondary btn-xs ml-2">{n.action.label}</a>
-                )}
-                {!n.read && (
+        ) : (
+          notifications.map(n => (
+            <div
+              key={n.id}
+              className={`flex items-start gap-2 py-2 transition-colors rounded-xl border border-neutral-200 shadow-sm bg-neutral-50 ${!n.read ? 'bg-primary-50/60 border-primary-200' : ''}`}
+              style={{ marginBottom: '0.5rem', padding: '0.75rem' }}
+            >
+              {typeIcons[n.type]}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className={`font-semibold text-sm ${!n.read ? 'text-primary-700' : 'text-neutral-800'}`}>{n.title}</span>
+                  {!n.read && <span className="ml-2 px-1.5 py-0.5 rounded text-xs font-medium bg-primary-200 text-primary-800">Nuevo</span>}
+                </div>
+                <p className="text-neutral-700 text-sm mt-0.5 mb-1">
+                  {(() => {
+                    // Busca el nombre completo en el mensaje y lo pone en negrita
+                    const regex = /El usuario (.+?) ha solicitado/;
+                    const match = n.message.match(regex);
+                    if (match) {
+                      const name = match[1];
+                      const before = n.message.split(name)[0];
+                      const after = n.message.split(name)[1];
+                      return <>{before}<strong className="font-bold text-primary-700 bg-primary-100 px-1.5 py-0.5 rounded-lg">{name}</strong>{after}</>;
+                    }
+                    return n.message;
+                  })()}
+                </p>
+                <div className="flex items-center gap-2 text-xs text-neutral-400">
+                  <span>{new Date(n.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                  {n.actionLabel && n.actionUrl && (
+                    <a href={n.actionUrl} className="btn-secondary btn-xs ml-2">{n.actionLabel}</a>
+                  )}
+                  {!n.read && (
+                    <button
+                      className="ml-2 text-primary-700 underline text-xs"
+                      onClick={() => markAsRead(n.id)}
+                    >
+                      Marcar como leída
+                    </button>
+                  )}
                   <button
-                    className="ml-2 text-primary-700 underline text-xs"
-                    onClick={() => markAsRead(n.id)}
+                    className="ml-2 text-red-600 underline text-xs"
+                    onClick={() => handleDelete(n.id)}
                   >
-                    Marcar como leída
+                    Eliminar notificación
                   </button>
-                )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

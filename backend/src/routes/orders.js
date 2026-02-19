@@ -278,7 +278,30 @@ router.post('/',
         }
       })
 
-      res.status(201).json(order)
+            // Notificación para admin
+            await prisma.notification.create({
+              data: {
+                title: 'Nuevo pedido recibido',
+                message: `Se ha creado un nuevo pedido de ${customerName}.`,
+                type: 'alerta',
+                actionLabel: 'Revisar pedidos',
+                actionUrl: '/admin/pedidos/general'
+              }
+            });
+            // Notificación para usuario
+            if (order.user && order.user.id) {
+              await prisma.notification.create({
+                data: {
+                  userId: order.user.id,
+                  title: 'Pedido realizado',
+                  message: '¡Hemos recibido tu pedido correctamente! Te esperamos en el restaurante.',
+                  type: 'pedido',
+                  actionLabel: 'Ver pedido',
+                  actionUrl: '/account/pedidos'
+                }
+              });
+            }
+            res.status(201).json(order)
     } catch (error) {
       console.error('Error al crear pedido:', error);
       if (error instanceof Error) {

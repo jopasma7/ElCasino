@@ -47,7 +47,6 @@ router.delete('/:id', adminAuthMiddleware, async (req, res) => {
 router.post('/', userAuthMiddleware, async (req, res) => {
   try {
     const { fechaReserva, cantidadPersonas, tipo, comentarios } = req.body;
-    console.log('req.user:', req.user);
     if (!req.user || !req.user.id) {
       return res.status(401).json({ error: 'No autorizado - usuario no logueado o id inválido' });
     }
@@ -60,6 +59,21 @@ router.post('/', userAuthMiddleware, async (req, res) => {
         comentarios,
       },
     });
+      // Obtener nombre del usuario para la notificación
+      const user = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        select: { name: true }
+      });
+      // Notificación para admin: nueva reserva pendiente
+      await prisma.notification.create({
+        data: {
+          title: 'Nueva reserva pendiente',
+          message: `El usuario ${user?.name || req.user.id} ha solicitado una reserva para el ${new Date(fechaReserva).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}.`,
+          type: 'alerta',
+          actionLabel: 'Revisar reservas',
+          actionUrl: '/admin/reservas'
+        }
+      });
     res.status(201).json(reserva);
   } catch (error) {
     console.error('Error al crear reserva:', error);
@@ -164,6 +178,39 @@ router.put('/:id', adminAuthMiddleware, async (req, res) => {
       where: { id: req.params.id },
       data: { estado },
     });
+    // Notificación para el usuario
+    let notifTitle = '', notifMsg = '', notifType = 'reserva';
+    if (estado === 'aprobada') {
+      notifTitle = 'Reserva confirmada';
+      notifMsg = `Tu reserva para ${reserva.cantidadPersonas} personas el ${reserva.fechaReserva.toLocaleString('es-ES')} ha sido confirmada.`;
+    } else if (estado === 'rechazada') {
+      notifTitle = 'Reserva rechazada';
+      notifMsg = `Lamentamos informarte que tu reserva para el ${reserva.fechaReserva.toLocaleString('es-ES')} no pudo ser confirmada.`;
+    }
+    if (notifTitle) {
+      await prisma.notification.create({
+        data: {
+          userId: reserva.userId,
+          title: notifTitle,
+          message: notifMsg,
+          type: notifType,
+          actionLabel: 'Ver reserva',
+          actionUrl: '/reservas'
+        }
+      });
+    }
+    // Notificación para admin: nueva reserva pendiente
+    if (estado === 'pendiente') {
+      await prisma.notification.create({
+        data: {
+          title: 'Nueva reserva pendiente',
+          message: `El usuario ${reserva.userId} ha solicitado una reserva para el ${reserva.fechaReserva.toLocaleString('es-ES')}.`,
+          type: 'alerta',
+          actionLabel: 'Revisar reservas',
+          actionUrl: '/admin/reservas'
+        }
+      });
+    }
     res.json(reserva);
   } catch (error) {
     console.error('Error al actualizar reserva:', error);

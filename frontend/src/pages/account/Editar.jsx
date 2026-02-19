@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Editar = ({ profileData, onProfileChange, onProfileSubmit, submitting, currentAvatar, setProfileAvatarPreview }) => {
+const Editar = ({ profileData, onProfileChange, onProfileSubmit, submitting, currentAvatar, setProfileAvatarPreview, handleLogout }) => {
   return (
     <div className="rounded-2xl bg-white p-6 md:p-8 shadow-xl">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">

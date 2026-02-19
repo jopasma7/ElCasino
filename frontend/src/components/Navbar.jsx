@@ -3,6 +3,8 @@ import { useAdmin } from '../hooks/useAdmin'
 import { Link, useLocation } from 'react-router-dom'
 import { Menu, X, ChefHat } from 'lucide-react'
 import { userProfileAPI } from '../services/api'
+import Badge from './Badge'
+import { notificationsAPI } from '../services/notificationsAPI'
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -10,6 +12,7 @@ const Navbar = () => {
   const [userAvatar, setUserAvatar] = useState(null)
   const [userName, setUserName] = useState(null)
   const { isAdmin, loading } = useAdmin()
+  const [unreadCount, setUnreadCount] = useState(0)
 
   const token = localStorage.getItem('token')
   const navLinks = [
@@ -57,12 +60,31 @@ const Navbar = () => {
 
   useEffect(() => {
     loadProfile()
+    // Fetch notifications count
+    const fetchNotifications = async () => {
+      try {
+        const res = await notificationsAPI.getAll()
+        const notifications = res.data.notifications || []
+        setUnreadCount(notifications.filter(n => !n.read).length)
+      } catch {}
+    }
+    fetchNotifications()
 
-    const handleAuthChange = () => loadProfile()
+    // Listen for logout and reset badge
+    const handleAuthChange = () => {
+      loadProfile()
+      const token = localStorage.getItem('token')
+      if (!token) setUnreadCount(0)
+    }
     window.addEventListener('user-auth-changed', handleAuthChange)
+
+    // Listen for notification updates
+    const handleNotificationsUpdated = () => fetchNotifications()
+    window.addEventListener('notifications-updated', handleNotificationsUpdated)
 
     return () => {
       window.removeEventListener('user-auth-changed', handleAuthChange)
+      window.removeEventListener('notifications-updated', handleNotificationsUpdated)
     }
   }, [])
 
@@ -114,23 +136,27 @@ const Navbar = () => {
               to="/cuenta"
               className="flex items-center gap-3 font-medium text-neutral-700 hover:text-primary-600 transition-colors"
             >
-              <span className="inline-flex w-10 h-10 rounded-full overflow-hidden shadow-sm bg-neutral-100">
-                <img
-                  src={userAvatar || '/avatar-default.svg'}
-                  alt="Avatar"
-                  className="w-full h-full object-cover"
-                />
-              </span>
-              <span>{userName || 'Cuenta'}</span>
+                <span className="relative inline-flex">
+                  <span className="w-10 h-10 rounded-full overflow-hidden shadow-sm bg-neutral-100">
+                    <img
+                      src={userAvatar || '/avatar-default.svg'}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  </span>
+                  <Badge count={unreadCount} />
+                </span>
+                <span>{userName || 'Cuenta'}</span>
             </Link>
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="custom-lg:hidden p-2 rounded-lg hover:bg-neutral-100 transition-colors"
+            className="custom-lg:hidden p-2 rounded-lg hover:bg-neutral-100 transition-colors relative"
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            <Badge count={unreadCount} />
           </button>
         </div>
 
@@ -156,8 +182,11 @@ const Navbar = () => {
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-3 py-3 px-4 rounded-lg mb-1 text-neutral-700 hover:bg-neutral-50"
             >
-              <span className="inline-flex w-9 h-9 rounded-full overflow-hidden bg-neutral-100">
-                <img src={userAvatar || '/avatar-default.svg'} alt="Avatar" className="w-full h-full object-cover" />
+              <span className="relative inline-flex">
+                <span className="w-9 h-9 rounded-full overflow-hidden bg-neutral-100">
+                  <img src={userAvatar || '/avatar-default.svg'} alt="Avatar" className="w-full h-full object-cover" />
+                </span>
+                <Badge count={unreadCount} />
               </span>
               <span>{userName || 'Cuenta'}</span>
             </Link>

@@ -26,6 +26,7 @@ import userRoutes from './routes/users.js'
 import categoryRoutes from './routes/categories.js'
 import ticketRoutes from './routes/tickets.js'
 import reservasRoutes from './routes/reservas.js'
+import notificationsRoutes from './routes/notifications.js'
 
 console.log('✅ Rutas importadas correctamente')
 
@@ -85,6 +86,7 @@ app.use('/api/orders', orderRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/tickets', ticketRoutes)
 app.use('/api/reservas', reservasRoutes)
+app.use('/api/notifications', notificationsRoutes)
 
 console.log('✅ Rutas configuradas correctamente')
 
