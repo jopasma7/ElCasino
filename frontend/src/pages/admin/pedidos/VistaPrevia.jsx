@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { dailyMenuAPI, ordersAPI } from '../../../services/api';
+import withReactContent from 'sweetalert2-react-content';
+import Swal from 'sweetalert2';
+const MySwal = withReactContent(Swal);
 
 const VistaPrevia = () => {
   const [menus, setMenus] = useState([]);
@@ -34,7 +37,7 @@ const VistaPrevia = () => {
   // Agrupar platos por tipo y contar cantidades
   const getDishCounts = () => {
     const dishCounts = {};
-    orders.forEach(order => {
+    orders.filter(order => order.status !== 'cancelled').forEach(order => {
       order.items.forEach(item => {
         const name = item.dishName || item.dish?.name || 'Plato eliminado';
         // Filtrar postres
@@ -102,7 +105,7 @@ const VistaPrevia = () => {
                   Por favor, verifica otra fecha o espera a que se registren nuevos pedidos.
                 </div>
               ) : (
-                orders.map(order => (
+                orders.filter(order => order.status !== 'cancelled').map(order => (
                   <div key={order.id} className="flex items-center text-sm bg-neutral-50 rounded-lg py-2 px-3 shadow-sm mb-1 border border-neutral-200">
                     <span className="font-bold mr-3 flex items-center gap-1 text-primary-700">
                       <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="#2563eb" strokeWidth="2"/></svg>
@@ -115,6 +118,34 @@ const VistaPrevia = () => {
                         </span>
                       ))}
                     </div>
+                    <div className="flex-1" />
+                    <button
+                      className="ml-4 px-3 py-1 rounded border border-red-300 text-red-600 bg-white font-semibold text-xs hover:bg-red-100 transition"
+                      style={{ minWidth: 80 }}
+                      onClick={async () => {
+                        const result = await MySwal.fire({
+                          title: '¿Eliminar pedido?',
+                          text: 'Esta acción no se puede deshacer.',
+                          icon: 'warning',
+                          showCancelButton: true,
+                          confirmButtonColor: '#2563eb',
+                          cancelButtonColor: '#aaa',
+                          confirmButtonText: 'Sí, eliminar',
+                          cancelButtonText: 'Cancelar',
+                        });
+                        if (result.isConfirmed) {
+                          try {
+                            await ordersAPI.cancel(order.id);
+                            setOrders(orders => orders.filter(o => o.id !== order.id));
+                            MySwal.fire('Eliminado', 'El pedido ha sido eliminado.', 'success');
+                          } catch (e) {
+                            MySwal.fire('Error', 'Error al eliminar el pedido', 'error');
+                          }
+                        }
+                      }}
+                    >
+                      Eliminar
+                    </button>
                   </div>
                 ))
               )}

@@ -30,7 +30,9 @@ const General = () => {
       setLoading(true);
       const params = statusFilter === 'all' ? undefined : { status: statusFilter };
       const response = await ordersAPI.getAll(params);
-      setOrders(response.data);
+      // Filtrar: solo mostrar pedidos externos (no admin)
+      const pedidosExternos = (response.data || []).filter(order => order.customerPhone !== '000000000');
+      setOrders(pedidosExternos);
     } catch (error) {
       console.error('Error al cargar pedidos:', error);
     } finally {

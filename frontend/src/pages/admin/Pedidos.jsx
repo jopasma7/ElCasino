@@ -4,7 +4,7 @@ import VistaPrevia from './pedidos/VistaPrevia';
 import CrearPedido from './pedidos/CrearPedido';
 
 const Pedidos = () => {
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState('crearPedido');
 
   return (
     <div>

@@ -17,6 +17,9 @@ const TPV = () => {
   const [platosOpen, setPlatosOpen] = useState(true);
   const [mesa, setMesa] = useState(1);
   const [ticket, setTicket] = useState([]);
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [calcValue, setCalcValue] = useState('');
+  const [calcResult, setCalcResult] = useState('');
   const [ticketsPorMesa, setTicketsPorMesa] = useState(Array(10).fill([]));
   const [ticketNamesPorMesa, setTicketNamesPorMesa] = useState(Array(10).fill('Ticket'));
   const [ticketName, setTicketName] = useState(`Ticket Mesa 1`);
@@ -34,239 +37,262 @@ const TPV = () => {
   // Estado para mostrar el modal de impresión
   const [showPrintModal, setShowPrintModal] = useState(false);
 
-      // Cambiar de mesa y cargar su ticket
-      const handleMesaChange = async (num) => {
-        // Salir de la room anterior y unirse a la nueva
-        if (socketRef.current) {
-          if (mesa !== num) {
-            socketRef.current.emit('leaveMesa', mesa); // salir de la mesa actual
-            socketRef.current.emit('joinMesa', num);   // unirse a la nueva mesa
-          }
-        }
-        setMesa(num);
-        // Leer ticket desde backend
-        try {
-          const res = await ticketsAPI.getTicket(num);
-          if (res.data) {
-            setTicketName(res.data.name);
-            setTicket(res.data.items.map(item => ({
-              id: item.dishId,
-              name: item.dish.name,
-              price: item.price,
-              cantidad: item.cantidad,
-              selectedOptions: item.customOptions // <-- Añadido para mantener customOptions
-            })));
-          } else {
-            setTicket([]);
-            setTicketName(`Ticket Mesa ${num}`);
-          }
-        } catch {
-          setTicket([]);
-          setTicketName(`Ticket Mesa ${num}`);
-        }
+  const handleCalcClick = (val) => {
+    if (val === 'C') {
+      setCalcValue('');
+      setCalcResult('');
+    } else if (val === '⌫') {
+      setCalcValue(calcValue.slice(0, -1));
+    } else if (val === '=') {
+      try {
+        // eslint-disable-next-line no-eval
+        const result = eval(calcValue);
+        setCalcResult(result !== undefined ? result : '');
+      } catch {
+        setCalcResult('Error');
       }
+    } else {
+      if (calcResult) {
+        setCalcValue(val);
+        setCalcResult('');
+      } else {
+        setCalcValue(calcValue + val);
+      }
+    }
+  };
 
-      // Al montar, cargar el ticket de la mesa seleccionada por defecto
-      useEffect(() => {
-        const cargarTicketInicial = async () => {
-          try {
-            const res = await ticketsAPI.getTicket(1);
-            if (res.data) {
-              setTicketName(res.data.name);
-              setTicket(res.data.items.map(item => ({
-                id: item.dishId,
-                name: item.dish.name,
-                price: item.price,
-                cantidad: item.cantidad,
-                selectedOptions: item.customOptions // <-- Añadido para mantener customOptions
-              })));
-            } else {
-              setTicket([]);
-              setTicketName('Ticket Mesa 1');
-            }
-          } catch {
-            setTicket([]);
-            setTicketName('Ticket Mesa 1');
-          }
-        };
-        cargarTicketInicial();
-      }, []);
+  // Cambiar de mesa y cargar su ticket
+  const handleMesaChange = async (num) => {
+    // Salir de la room anterior y unirse a la nueva
+    if (socketRef.current) {
+      if (mesa !== num) {
+        socketRef.current.emit('leaveMesa', mesa); // salir de la mesa actual
+        socketRef.current.emit('joinMesa', num);   // unirse a la nueva mesa
+      }
+    }
+    setMesa(num);
+    // Leer ticket desde backend
+    try {
+      const res = await ticketsAPI.getTicket(num);
+      if (res.data) {
+        setTicketName(res.data.name);
+        setTicket(res.data.items.map(item => ({
+          id: item.dishId,
+          name: item.dish.name,
+          price: item.price,
+          cantidad: item.cantidad,
+          selectedOptions: item.customOptions // <-- Añadido para mantener customOptions
+        })));
+      } else {
+        setTicket([]);
+        setTicketName(`Ticket Mesa ${num}`);
+      }
+    } catch {
+      setTicket([]);
+      setTicketName(`Ticket Mesa ${num}`);
+    }
+  }
 
-      useEffect(() => {
-        // Solo crear la conexión una vez
-        const socket = io(config.wsUrl)
-        socketRef.current = socket
-        socket.emit('joinMesa', mesa);
-
-        const fetchAndIdentify = async () => {
-          try {
-            const res = await userProfileAPI.getMe()
-            const name = res.data?.name || 'Desconocido'
-            socket.emit('identify', { name })
-          } catch {
-            socket.emit('identify', { name: 'Desconocido' })
-          }
+  // Al montar, cargar el ticket de la mesa seleccionada por defecto
+  useEffect(() => {
+    const cargarTicketInicial = async () => {
+      try {
+        const res = await ticketsAPI.getTicket(1);
+        if (res.data) {
+          setTicketName(res.data.name);
+          setTicket(res.data.items.map(item => ({
+            id: item.dishId,
+            name: item.dish.name,
+            price: item.price,
+            cantidad: item.cantidad,
+            selectedOptions: item.customOptions // <-- Añadido para mantener customOptions
+          })));
+        } else {
+          setTicket([]);
+          setTicketName('Ticket Mesa 1');
         }
-        fetchAndIdentify()
+      } catch {
+        setTicket([]);
+        setTicketName('Ticket Mesa 1');
+      }
+    };
+    cargarTicketInicial();
+  }, []);
 
-        // Cleanup global
-        return () => {
-          socket.disconnect();
-        }
-      }, [])
+  useEffect(() => {
+    // Solo crear la conexión una vez
+    const socket = io(config.wsUrl)
+    socketRef.current = socket
+    socket.emit('joinMesa', mesa);
 
-      // Listener dependiente de mesa
-      useEffect(() => {
-        const socket = socketRef.current;
-        if (!socket) return;
-        const ticketUpdatedHandler = async (data) => {
-          if (data.mesa === mesa) {
-            try {
-              const res = await ticketsAPI.getTicket(mesa)
-              if (res.data) {
-                setTicketName(res.data.name)
-                setTicket(res.data.items.map(item => ({
-                  id: item.dishId,
-                  name: item.dish.name,
-                  price: item.price,
-                  cantidad: item.cantidad,
-                  selectedOptions: Array.isArray(item.customOptions) ? item.customOptions : []
-                })))
-              } else {
-                setTicket([])
-                setTicketName('Ticket')
-              }
-            } catch {
-              setTicket([])
-              setTicketName('Ticket')
-            }
-          }
-        };
-        socket.on('ticketUpdated', ticketUpdatedHandler);
-        return () => {
-          socket.off('ticketUpdated', ticketUpdatedHandler);
-        }
-      }, [mesa])
+    const fetchAndIdentify = async () => {
+      try {
+        const res = await userProfileAPI.getMe()
+        const name = res.data?.name || 'Desconocido'
+        socket.emit('identify', { name })
+      } catch {
+        socket.emit('identify', { name: 'Desconocido' })
+      }
+    }
+    fetchAndIdentify()
 
-      // Emitir ticket actualizado al backend y guardar en DB
-      // ...existing code...
-      const emitTicketUpdate = async (ticketData = null) => {
-        const data = ticketData || { mesa, ticket, ticketName };
-        if (isUpdating) {
-          setPendingUpdate(data);
-          return;
-        }
-        setIsUpdating(true);
+    // Cleanup global
+    return () => {
+      socket.disconnect();
+    }
+  }, [])
+
+  // Listener dependiente de mesa
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket) return;
+    const ticketUpdatedHandler = async (data) => {
+      if (data.mesa === mesa) {
         try {
-          // Primero guardar en backend
-          const payload = {
-            name: data.ticketName,
-            items: data.ticket.map(item => ({
-              dishId: item.id,
-              cantidad: item.cantidad,
-              price: item.price,
-              customOptions: item.selectedOptions || undefined
-            }))
-          };
-          const res = await ticketsAPI.updateTicket(data.mesa, payload);
-          // Actualizar ticket local con la respuesta del backend (opcional, pero recomendable)
-          if (res.data && res.data.items) {
+          const res = await ticketsAPI.getTicket(mesa)
+          if (res.data) {
+            setTicketName(res.data.name)
             setTicket(res.data.items.map(item => ({
               id: item.dishId,
               name: item.dish.name,
               price: item.price,
               cantidad: item.cantidad,
               selectedOptions: Array.isArray(item.customOptions) ? item.customOptions : []
-            })));
-          }
-          // Emitir evento solo después de guardar, usando el ticket actualizado del backend
-          socketRef.current.emit('updateTicket', {
-            mesa: data.mesa,
-            ticket: res.data.items,
-            ticketName: res.data.name
-          });
-          toast.success('Ticket enviado correctamente', { position: 'top-right' });
-        } catch (e) {
-          toast.error('Error al enviar el ticket', { position: 'top-right' });
-        } finally {
-          setIsUpdating(false);
-        }
-      };
-
-    // Añadir producto al ticket
-      // Modal para customOptions
-      // ...existing code...
-
-      // Añadir producto al ticket (con soporte para customOptions)
-      const handleAdd = (dish) => {
-        if (dish.customOptions && dish.customOptions.length > 0) {
-          setModalDish(dish);
-          setModalOpen(true);
-        } else {
-          setTicket(prev => {
-            const idx = prev.findIndex(item => {
-              const sameId = item.id === dish.id;
-              const noOptions = !item.selectedOptions || item.selectedOptions.length === 0;
-              return sameId && noOptions;
-            });
-            let updated;
-            if (idx >= 0) {
-              updated = [...prev];
-              updated[idx] = { ...updated[idx], cantidad: updated[idx].cantidad + 1 };
-            } else {
-              updated = [...prev, { ...dish, cantidad: 1 }];
-            }
-            return updated;
-          });
-        }
-      };
-
-      // Confirmar selección de opciones y añadir al ticket
-      const handleConfirmOptions = (selectedOptions) => {
-        if (!modalDish) return;
-        setTicket(prev => {
-          // Buscar si ya existe un plato igual con las mismas opciones
-          const idx = prev.findIndex(item => item.id === modalDish.id && JSON.stringify(item.selectedOptions) === JSON.stringify(selectedOptions));
-          let updated;
-          if (idx >= 0) {
-            updated = [...prev];
-            updated[idx] = { ...updated[idx], cantidad: updated[idx].cantidad + 1 };
+            })))
           } else {
-            updated = [...prev, { ...modalDish, cantidad: 1, selectedOptions }];
+            setTicket([])
+            setTicketName('Ticket')
           }
-          return updated;
+        } catch {
+          setTicket([])
+          setTicketName('Ticket')
+        }
+      }
+    };
+    socket.on('ticketUpdated', ticketUpdatedHandler);
+    return () => {
+      socket.off('ticketUpdated', ticketUpdatedHandler);
+    }
+  }, [mesa])
+
+  // Emitir ticket actualizado al backend y guardar en DB
+  // ...existing code...
+  const emitTicketUpdate = async (ticketData = null) => {
+    const data = ticketData || { mesa, ticket, ticketName };
+    if (isUpdating) {
+      setPendingUpdate(data);
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      // Primero guardar en backend
+      const payload = {
+        name: data.ticketName,
+        items: data.ticket.map(item => ({
+          dishId: item.id,
+          cantidad: item.cantidad,
+          price: item.price,
+          customOptions: item.selectedOptions || undefined
+        }))
+      };
+      const res = await ticketsAPI.updateTicket(data.mesa, payload);
+      // Actualizar ticket local con la respuesta del backend (opcional, pero recomendable)
+      if (res.data && res.data.items) {
+        setTicket(res.data.items.map(item => ({
+          id: item.dishId,
+          name: item.dish.name,
+          price: item.price,
+          cantidad: item.cantidad,
+          selectedOptions: Array.isArray(item.customOptions) ? item.customOptions : []
+        })));
+      }
+      // Emitir evento solo después de guardar, usando el ticket actualizado del backend
+      socketRef.current.emit('updateTicket', {
+        mesa: data.mesa,
+        ticket: res.data.items,
+        ticketName: res.data.name
+      });
+      toast.success('Ticket enviado correctamente', { position: 'top-right' });
+    } catch (e) {
+      toast.error('Error al enviar el ticket', { position: 'top-right' });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Añadir producto al ticket
+  // Modal para customOptions
+  // ...existing code...
+
+  // Añadir producto al ticket (con soporte para customOptions)
+  const handleAdd = (dish) => {
+    if (dish.customOptions && dish.customOptions.length > 0) {
+      setModalDish(dish);
+      setModalOpen(true);
+    } else {
+      setTicket(prev => {
+        const idx = prev.findIndex(item => {
+          const sameId = item.id === dish.id;
+          const noOptions = !item.selectedOptions || item.selectedOptions.length === 0;
+          return sameId && noOptions;
         });
-        setModalOpen(false);
-        setModalDish(null);
-      };
+        let updated;
+        if (idx >= 0) {
+          updated = [...prev];
+          updated[idx] = { ...updated[idx], cantidad: updated[idx].cantidad + 1 };
+        } else {
+          updated = [...prev, { ...dish, cantidad: 1 }];
+        }
+        return updated;
+      });
+    }
+  };
 
-    // Modificar cantidad
-      // Cambia la cantidad solo del item con el mismo id y mismas opciones personalizadas
-      const handleChangeQty = (id, delta, selectedOptions) => {
-        setTicket(prev => {
-          const updated = prev.map(item => {
-            const sameId = item.id === id;
-            const sameOptions = JSON.stringify(item.selectedOptions || []) === JSON.stringify(selectedOptions || []);
-            if (sameId && sameOptions) {
-              return { ...item, cantidad: Math.max(1, item.cantidad + delta) };
-            }
-            return item;
-          });
-          return updated;
-        });
-      };
+  // Confirmar selección de opciones y añadir al ticket
+  const handleConfirmOptions = (selectedOptions) => {
+    if (!modalDish) return;
+    setTicket(prev => {
+      // Buscar si ya existe un plato igual con las mismas opciones
+      const idx = prev.findIndex(item => item.id === modalDish.id && JSON.stringify(item.selectedOptions) === JSON.stringify(selectedOptions));
+      let updated;
+      if (idx >= 0) {
+        updated = [...prev];
+        updated[idx] = { ...updated[idx], cantidad: updated[idx].cantidad + 1 };
+      } else {
+        updated = [...prev, { ...modalDish, cantidad: 1, selectedOptions }];
+      }
+      return updated;
+    });
+    setModalOpen(false);
+    setModalDish(null);
+  };
 
-    // Eliminar producto
-      const handleRemove = (id) => {
-          setTicket(prev => {
-            const updated = prev.filter(item => item.id !== id);
-            return updated;
-          });
-      };
-      // Eliminado el envío automático del ticket en cada cambio
+// Modificar cantidad
+  // Cambia la cantidad solo del item con el mismo id y mismas opciones personalizadas
+  const handleChangeQty = (id, delta, selectedOptions) => {
+    setTicket(prev => {
+      const updated = prev.map(item => {
+        const sameId = item.id === id;
+        const sameOptions = JSON.stringify(item.selectedOptions || []) === JSON.stringify(selectedOptions || []);
+        if (sameId && sameOptions) {
+          return { ...item, cantidad: Math.max(1, item.cantidad + delta) };
+        }
+        return item;
+      });
+      return updated;
+    });
+  };
 
-    // Calcular total
-    const total = ticket.reduce((sum, item) => sum + item.price * item.cantidad, 0)
+  // Eliminar producto
+  const handleRemove = (id) => {
+      setTicket(prev => {
+        const updated = prev.filter(item => item.id !== id);
+        return updated;
+      });
+  };
+
+  // Calcular total
+  const total = ticket.reduce((sum, item) => sum + item.price * item.cantidad, 0)
   // ...existing code...
 
   useEffect(() => {
@@ -473,6 +499,23 @@ const TPV = () => {
               >
                 <span role="img" aria-label="Expandir">⤢</span>
               </button>
+              <button
+                className="rounded-full bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg w-10 h-10 flex items-center justify-center text-lg transition-all duration-200"
+                onClick={() => { setCalcValue(''); setCalcResult(''); setShowCalculator(true); }}
+                title="Abrir calculadora"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="4" y="2" width="16" height="20" rx="2" fill="white" stroke="black" strokeWidth="2"/>
+                  <rect x="7" y="5" width="10" height="2" fill="none" stroke="black" strokeWidth="1.2"/>
+                  <circle cx="8" cy="10" r="1" fill="black"/>
+                  <circle cx="12" cy="10" r="1" fill="black"/>
+                  <circle cx="16" cy="10" r="1" fill="black"/>
+                  <circle cx="8" cy="14" r="1" fill="black"/>
+                  <circle cx="12" cy="14" r="1" fill="black"/>
+                  <circle cx="16" cy="14" r="1" fill="black"/>
+                  <rect x="7" y="17" width="10" height="2" fill="none" stroke="black" strokeWidth="1.2"/>
+                </svg>
+              </button>
               {/* Botón imprimir ticket */}
               <button
                 className="rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg w-10 h-10 flex items-center justify-center text-lg transition-all duration-200"
@@ -484,32 +527,81 @@ const TPV = () => {
                   <path d="M6 19v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2h2a1 1 0 0 0 1-1v-7a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v7a1 1 0 0 0 1 1h2zm2 2v-4h8v4H8zm10-2v-2a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v2H4v-7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v7h-2zm-1-14V3a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v2h10zm-2-2v2H8V3h8z"/>
                 </svg>
               </button>
-                          {/* Modal para elegir impresión con/sin precios */}
-                          {showPrintModal && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-                              <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs text-center">
-                                <h2 className="text-lg font-bold mb-4">¿Cómo quieres imprimir el ticket?</h2>
-                                <button
-                                  className="btn-primary w-full mb-3 py-2"
-                                  onClick={() => doPrintTicket(true)}
-                                >
-                                  Imprimir <b>con precios</b>
-                                </button>
-                                <button
-                                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold w-full py-2 rounded mb-2"
-                                  onClick={() => doPrintTicket(false)}
-                                >
-                                  Imprimir <b>sin precios</b>
-                                </button>
-                                <button
-                                  className="text-red-600 mt-2 underline"
-                                  onClick={() => setShowPrintModal(false)}
-                                >
-                                  Cancelar
-                                </button>
-                              </div>
-                            </div>
-                          )}
+                   {showCalculator && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 animate-fade-in">
+                      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md text-center border border-gray-200 animate-slide-up" style={{ minWidth: '340px' }}>
+                        <h2 className="text-xl font-bold mb-4 text-primary-700">Calculadora</h2>
+                        <div className="mb-3 text-right text-4xl font-mono border rounded-lg p-5 bg-gray-50 min-h-[70px] transition-all" style={{ fontSize: '2.3rem', lineHeight: '2.7rem' }}>
+                          {calcValue || '0'}
+                          <div className={`text-2xl mt-2 ${calcResult === 'Error' ? 'text-red-500' : 'text-green-600'}`} style={{ fontSize: '1.5rem', lineHeight: '2rem' }}>
+                            {calcResult !== '' && (calcResult === 'Error' ? 'Error' : `= ${calcResult}`)}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2 mb-2">
+                          {['7','8','9','/',
+                            '4','5','6','*',
+                            '1','2','3','-',
+                            '0','.','=','+'].map(val => (
+                            <button
+                              key={val}
+                              className={`py-3 rounded-lg font-bold text-xl shadow-sm transition-all
+                                ${val === '='
+                                  ? 'bg-primary-600 text-white hover:bg-primary-700'
+                                  : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}
+                              `}
+                              onClick={() => handleCalcClick(val)}
+                            >
+                              {val}
+                            </button>
+                          ))}
+                          <button
+                            className="col-span-2 py-3 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 font-bold text-xl shadow-sm transition-all"
+                            onClick={() => handleCalcClick('C')}
+                          >
+                            C
+                          </button>
+                          <button
+                            className="col-span-2 py-3 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xl shadow-sm transition-all"
+                            onClick={() => handleCalcClick('⌫')}
+                          >
+                            ⌫
+                          </button>
+                        </div>
+                        <button
+                          className="mt-2 w-full py-2 rounded-lg bg-gray-400 hover:bg-gray-500 text-white font-semibold transition-all"
+                          onClick={() => setShowCalculator(false)}
+                        >
+                          Cerrar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {/* Modal para elegir impresión con/sin precios */}
+                  {showPrintModal && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                        <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs text-center">
+                          <h2 className="text-lg font-bold mb-4">¿Cómo quieres imprimir el ticket?</h2>
+                          <button
+                            className="btn-primary w-full mb-3 py-2"
+                            onClick={() => doPrintTicket(true)}
+                          >
+                            Imprimir <b>con precios</b>
+                          </button>
+                          <button
+                            className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold w-full py-2 rounded mb-2"
+                            onClick={() => doPrintTicket(false)}
+                          >
+                            Imprimir <b>sin precios</b>
+                          </button>
+                          <button
+                            className="text-red-600 mt-2 underline"
+                            onClick={() => setShowPrintModal(false)}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     {/* Modal para ticket expandido */}
                     {ticketExpand && (
                       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 pt-36 pb-12">

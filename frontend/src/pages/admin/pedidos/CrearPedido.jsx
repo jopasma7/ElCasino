@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { dailyMenuAPI, ordersAPI } from '../../../services/api';
+import withReactContent from 'sweetalert2-react-content';
+import Swal from 'sweetalert2';
+const MySwal = withReactContent(Swal);
 
 const CrearPedido = () => {
   const [customerName, setCustomerName] = useState('');
   const [orderType, setOrderType] = useState('takeaway');
   const [menuOptions, setMenuOptions] = useState([]);
   const [selectedMenu, setSelectedMenu] = useState('');
-  const [selectedPlatos, setSelectedPlatos] = useState({ primero: '', segundo: '', });
+  const [selectedPlatos, setSelectedPlatos] = useState({ primero: '', segundo: '' });
+  const [cantidades, setCantidades] = useState({ primero: 1, segundo: 1 });
   // ...existing code...
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
@@ -44,13 +48,14 @@ const CrearPedido = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // No confirmación, solo crear y mostrar modal de éxito
     setLoading(true);
     setSuccess('');
     setError('');
     try {
       const items = [];
-      if (selectedPlatos.primero) items.push({ dishName: selectedPlatos.primero, quantity: 1 });
-      if (selectedPlatos.segundo) items.push({ dishName: selectedPlatos.segundo, quantity: 1 });
+      if (selectedPlatos.primero) items.push({ dishName: selectedPlatos.primero, quantity: cantidades.primero });
+      if (selectedPlatos.segundo) items.push({ dishName: selectedPlatos.segundo, quantity: cantidades.segundo });
       const response = await ordersAPI.createAdmin({
         customerName,
         isDailyMenu: true,
@@ -63,6 +68,8 @@ const CrearPedido = () => {
         setError('');
         setCustomerName('');
         setSelectedPlatos({ primero: '', segundo: '' });
+        setCantidades({ primero: 1, segundo: 1 });
+        MySwal.fire('¡Pedido creado!', 'El pedido ha sido registrado correctamente.', 'success');
       } else {
         setError('Error al crear pedido');
         setSuccess('');
@@ -85,8 +92,8 @@ const CrearPedido = () => {
         </div>
       )}
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow p-6 border border-neutral-200" disabled={(!menuOptions.length || menuOptions.filter(d => d.type === 'primero').length === 0 || menuOptions.filter(d => d.type === 'segundo').length === 0)}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Tipo de pedido movido al final */}
+        {/* Fila 1: Nombre */}
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
           <div>
             <label className="block font-medium mb-1 text-primary-700">Nombre</label>
             <input
@@ -98,37 +105,62 @@ const CrearPedido = () => {
               disabled={!menuOptions.length || menuOptions.filter(d => d.type === 'primero').length === 0 || menuOptions.filter(d => d.type === 'segundo').length === 0}
             />
           </div>
+        </div>
+        {/* Fila 2: Primer y Segundo Plato */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block font-medium mb-1 text-primary-700">Primer Plato</label>
-            <select
-              className="input-field w-full"
-              value={selectedPlatos.primero}
-              onChange={e => setSelectedPlatos(platos => ({ ...platos, primero: e.target.value }))}
-              disabled={!menuOptions.length || menuOptions.filter(d => d.type === 'primero').length === 0}
-            >
-              <option value="">Selecciona...</option>
-              {menuOptions.filter(d => d.type === 'primero').map(dish => (
-                <option key={dish.name} value={dish.name}>{dish.name}</option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <select
+                className="input-field w-full"
+                value={selectedPlatos.primero}
+                onChange={e => setSelectedPlatos(platos => ({ ...platos, primero: e.target.value }))}
+                disabled={!menuOptions.length || menuOptions.filter(d => d.type === 'primero').length === 0}
+              >
+                <option value="">Selecciona...</option>
+                {menuOptions.filter(d => d.type === 'primero').map(dish => (
+                  <option key={dish.name} value={dish.name}>{dish.name}</option>
+                ))}
+              </select>
+              <input
+                type="number"
+                min={1}
+                className="input-field w-20"
+                value={cantidades.primero}
+                onChange={e => setCantidades(c => ({ ...c, primero: Math.max(1, Number(e.target.value)) }))}
+                disabled={!selectedPlatos.primero}
+                placeholder="Cantidad"
+              />
+            </div>
           </div>
           <div>
             <label className="block font-medium mb-1 text-primary-700">Segundo Plato</label>
-            <select
-              className="input-field w-full"
-              value={selectedPlatos.segundo}
-              onChange={e => setSelectedPlatos(platos => ({ ...platos, segundo: e.target.value }))}
-              disabled={!menuOptions.length || menuOptions.filter(d => d.type === 'segundo').length === 0}
-            >
-              <option value="">Selecciona...</option>
-              {menuOptions.filter(d => d.type === 'segundo').map(dish => (
-                <option key={dish.name} value={dish.name}>{dish.name}</option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <select
+                className="input-field w-full"
+                value={selectedPlatos.segundo}
+                onChange={e => setSelectedPlatos(platos => ({ ...platos, segundo: e.target.value }))}
+                disabled={!menuOptions.length || menuOptions.filter(d => d.type === 'segundo').length === 0}
+              >
+                <option value="">Selecciona...</option>
+                {menuOptions.filter(d => d.type === 'segundo').map(dish => (
+                  <option key={dish.name} value={dish.name}>{dish.name}</option>
+                ))}
+              </select>
+              <input
+                type="number"
+                min={1}
+                className="input-field w-20"
+                value={cantidades.segundo}
+                onChange={e => setCantidades(c => ({ ...c, segundo: Math.max(1, Number(e.target.value)) }))}
+                disabled={!selectedPlatos.segundo}
+                placeholder="Cantidad"
+              />
+            </div>
           </div>
-          {/* Campo de Postre eliminado */}
         </div>
-        <div className="mt-6 mb-4">
+        {/* Fila 3: Tipo de pedido */}
+        <div className="mb-4">
           <label className="block font-medium mb-2 text-primary-700">Tipo de Pedido</label>
           <div className="flex gap-6">
             <label className="flex items-center gap-2">
